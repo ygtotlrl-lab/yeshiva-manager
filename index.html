@@ -7,237 +7,260 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* ── משתנים ── */
 :root{
-  --navy:#1a3a6b;
-  --navy2:#234a8a;
-  --blue-light:#eef2fa;
-  --blue-mid:#d0ddf5;
-  --gold:#c9a84c;
-  --text:#1a2340;
-  --text2:#4a5568;
-  --text3:#8a97b0;
-  --border:#d8e2f0;
-  --bg:#f4f7fc;
-  --bg2:#fff;
-  --red:#c0392b;
-  --green:#1a7a4a;
-  --r:8px;
+  --navy:#1a3a6b;--navy2:#234a8a;--navy3:#0f2347;
+  --blue-light:#eef2fa;--blue-mid:#d0ddf5;
+  --gold:#c9a84c;--gold2:#e8c060;
+  --text:#1a2340;--text2:#4a5568;--text3:#8a97b0;
+  --border:#d8e2f0;--bg:#f0f4fa;--bg2:#fff;
+  --red:#c0392b;--green:#1a7a4a;
+  --r:10px;
   --shadow:0 2px 8px rgba(26,58,107,0.10);
-  --shadow2:0 4px 16px rgba(26,58,107,0.14);
+  --shadow2:0 4px 20px rgba(26,58,107,0.16);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Heebo,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl;font-size:15px}
+body{font-family:Heebo,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
 
-/* ── HEADER ── */
+/* HEADER */
 header{
-  background:var(--navy);
-  padding:0 32px;
-  display:flex;align-items:center;justify-content:space-between;
-  height:72px;
-  box-shadow:0 2px 12px rgba(0,0,0,0.18);
+  background:linear-gradient(135deg,var(--navy3) 0%,var(--navy) 60%,var(--navy2) 100%);
+  padding:0 32px;display:flex;align-items:center;justify-content:space-between;
+  height:74px;box-shadow:0 3px 16px rgba(0,0,0,0.22);
   position:sticky;top:0;z-index:100;
 }
-.header-logo{display:flex;align-items:center;gap:14px}
-.header-logo svg text{fill:#fff !important}
-.header-logo svg line,.header-logo svg path{stroke:#c5d8ff !important}
-.header-title{color:#fff;font-size:1rem;font-weight:500;line-height:1.3;opacity:.9}
-
+.header-logo{display:flex;align-items:center;gap:0}
+.header-divider{width:1px;height:44px;background:rgba(255,255,255,0.2);margin:0 20px}
+.header-text{color:rgba(255,255,255,0.9);font-size:.88rem;line-height:1.5}
+.header-text strong{display:block;font-size:1rem;color:#fff}
 nav{display:flex;gap:4px}
 .nb{
-  background:none;border:none;
-  color:rgba(255,255,255,0.75);
-  padding:8px 16px;border-radius:6px;
-  cursor:pointer;font-family:Heebo;font-size:.9rem;font-weight:500;
-  display:flex;align-items:center;gap:8px;
-  transition:all .2s;border:1px solid transparent;
+  background:none;border:none;color:rgba(255,255,255,0.72);
+  padding:9px 16px;border-radius:6px;cursor:pointer;
+  font-family:Heebo;font-size:.88rem;font-weight:500;
+  display:flex;align-items:center;gap:7px;transition:all .18s;
 }
-.nb:hover{background:rgba(255,255,255,0.12);color:#fff}
-.nb.on{background:rgba(255,255,255,0.18);color:#fff;border-color:rgba(255,255,255,0.25)}
-.nb .ic{font-size:1.05rem}
+.nb:hover{background:rgba(255,255,255,0.13);color:#fff}
+.nb.on{background:rgba(255,255,255,0.20);color:#fff;font-weight:600}
 
-/* ── MAIN ── */
-main{padding:28px 32px;max-width:1100px;margin:0 auto}
+/* MAIN */
+main{padding:0;max-width:100%}
 
-/* ── PAGE HEADER ── */
-.pg-title{
-  font-size:1.5rem;font-weight:700;color:var(--navy);
-  display:flex;align-items:center;gap:10px;margin-bottom:24px;
-}
-.pg-title::after{
-  content:"";flex:1;height:2px;
-  background:linear-gradient(90deg,var(--navy),transparent);
-  border-radius:2px;margin-right:8px;
-}
-
-/* ── PAGES ── */
+/* PAGE */
 .pg{display:none}.pg.on{display:block}
 
-/* ── CARDS ── */
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:28px}
-.card{
-  background:var(--bg2);
-  border:1px solid var(--border);
-  border-radius:var(--r);
-  padding:22px 20px;
-  box-shadow:var(--shadow);
+/* ── HOME PAGE ── */
+#pg-home{
+  min-height:calc(100vh - 74px);
+  background:linear-gradient(160deg,#eef2fa 0%,#f8f9ff 50%,#e8f0fb 100%);
+}
+.home-hero{
+  background:linear-gradient(135deg,var(--navy3),var(--navy),var(--navy2));
+  color:#fff;padding:40px 40px 50px;
   position:relative;overflow:hidden;
 }
-.card::before{
-  content:"";position:absolute;top:0;right:0;width:4px;height:100%;
-  background:var(--navy);border-radius:0 var(--r) var(--r) 0;
+.home-hero::before{
+  content:"";position:absolute;
+  top:-60px;left:-60px;width:300px;height:300px;
+  border-radius:50%;background:rgba(255,255,255,0.04);
 }
-.card .n{font-size:2.2rem;font-weight:700;color:var(--navy);line-height:1.1}
-.card .l{color:var(--text2);font-size:.85rem;margin-top:4px}
+.home-hero::after{
+  content:"";position:absolute;
+  bottom:-80px;right:10%;width:400px;height:400px;
+  border-radius:50%;background:rgba(255,255,255,0.03);
+}
+.hero-date{font-size:.85rem;opacity:.7;margin-bottom:6px;letter-spacing:.03em}
+.hero-title{font-size:1.7rem;font-weight:700;margin-bottom:4px;position:relative;z-index:1}
+.hero-sub{font-size:.92rem;opacity:.8;position:relative;z-index:1}
 
-/* ── GOV-STYLE BUTTON (כמו משרד החינוך) ── */
+/* STATS BAR */
+.stats-bar{
+  display:grid;grid-template-columns:repeat(4,1fr);
+  background:var(--bg2);
+  border-bottom:1px solid var(--border);
+  box-shadow:var(--shadow);
+}
+.stat-item{
+  padding:18px 20px;text-align:center;
+  border-left:1px solid var(--border);
+  transition:background .15s;cursor:default;
+}
+.stat-item:last-child{border-left:none}
+.stat-item:hover{background:var(--blue-light)}
+.stat-num{font-size:2rem;font-weight:700;color:var(--navy);line-height:1}
+.stat-lbl{font-size:.78rem;color:var(--text2);margin-top:3px}
+
+/* MODULES GRID */
+.modules-section{padding:32px 40px 40px}
+.modules-title{
+  font-size:1.1rem;font-weight:600;color:var(--text2);
+  margin-bottom:20px;display:flex;align-items:center;gap:10px;
+  text-transform:uppercase;letter-spacing:.05em;font-size:.82rem;
+}
+.modules-title::before{content:"";width:3px;height:18px;background:var(--navy);border-radius:2px;display:inline-block}
+.modules-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:16px;
+}
+.module-btn{
+  background:var(--bg2);
+  border:1.5px solid var(--border);
+  border-radius:14px;
+  padding:28px 24px;
+  cursor:pointer;
+  display:flex;align-items:flex-start;gap:16px;
+  transition:all .22s;
+  box-shadow:var(--shadow);
+  text-align:right;
+  position:relative;overflow:hidden;
+}
+.module-btn::before{
+  content:"";position:absolute;
+  top:0;right:0;width:4px;height:100%;
+  background:var(--color,var(--navy));
+  border-radius:0 14px 14px 0;
+  transition:width .22s;
+}
+.module-btn:hover{
+  border-color:var(--color,var(--navy));
+  box-shadow:var(--shadow2);
+  transform:translateY(-2px);
+}
+.module-btn:hover::before{width:6px}
+.module-icon{
+  width:52px;height:52px;border-radius:12px;
+  background:var(--icon-bg,var(--blue-light));
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.6rem;flex-shrink:0;
+  transition:transform .22s;
+}
+.module-btn:hover .module-icon{transform:scale(1.08)}
+.module-info{flex:1;min-width:0}
+.module-name{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:4px}
+.module-desc{font-size:.8rem;color:var(--text3);line-height:1.4}
+.module-arrow{
+  position:absolute;left:18px;top:50%;transform:translateY(-50%);
+  color:var(--text3);font-size:1.1rem;opacity:0;
+  transition:opacity .2s,transform .2s;
+}
+.module-btn:hover .module-arrow{opacity:1;transform:translateY(-50%) translateX(-4px)}
+
+/* INNER PAGE WRAPPER */
+.inner-page{padding:28px 40px;max-width:1100px;margin:0 auto}
+
+/* PAGE TITLE */
+.pg-title{
+  font-size:1.4rem;font-weight:700;color:var(--navy);
+  display:flex;align-items:center;gap:12px;margin-bottom:24px;
+  padding-bottom:14px;border-bottom:2px solid var(--border);
+}
+.pg-title .back-btn{
+  background:none;border:1.5px solid var(--border);color:var(--text2);
+  border-radius:20px;padding:5px 14px;font-size:.82rem;font-family:Heebo;
+  cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:5px;
+}
+.pg-title .back-btn:hover{border-color:var(--navy);color:var(--navy);background:var(--blue-light)}
+
+/* BTN GOV */
 .btn-gov{
   display:inline-flex;align-items:center;gap:10px;
-  background:var(--navy);
-  color:#fff;
-  border:2px solid var(--navy);
-  border-radius:30px;
-  padding:9px 22px;
-  font-family:Heebo;font-size:.9rem;font-weight:600;
-  cursor:pointer;
-  transition:all .2s;
-  box-shadow:var(--shadow);
-  white-space:nowrap;
+  background:var(--navy);color:#fff;
+  border:2px solid var(--navy);border-radius:30px;
+  padding:9px 22px;font-family:Heebo;font-size:.9rem;font-weight:600;
+  cursor:pointer;transition:all .2s;box-shadow:var(--shadow);white-space:nowrap;
 }
 .btn-gov:hover{background:var(--navy2);border-color:var(--navy2);box-shadow:var(--shadow2);transform:translateY(-1px)}
 .btn-gov.outline{background:#fff;color:var(--navy);border-color:var(--navy)}
 .btn-gov.outline:hover{background:var(--blue-light)}
 .btn-gov.gold{background:var(--gold);border-color:var(--gold);color:#fff}
-.btn-gov .btn-icon{
-  width:28px;height:28px;border-radius:50%;
-  background:rgba(255,255,255,0.2);
-  display:flex;align-items:center;justify-content:center;
-  font-size:.95rem;flex-shrink:0;
-}
+.btn-gov .btn-icon{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0}
 .btn-gov.outline .btn-icon{background:var(--blue-light)}
 
-/* ── ROW HEADER ── */
+/* ROW HEADER */
 .row-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 
-/* ── TABLE ── */
+/* TABLE */
 .tw{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
 table{width:100%;border-collapse:collapse}
 thead{background:linear-gradient(135deg,var(--navy),var(--navy2))}
-th{color:#fff;font-weight:600;padding:13px 16px;text-align:right;font-size:.88rem;letter-spacing:.02em}
-td{padding:12px 16px;border-bottom:1px solid var(--border);font-size:.92rem;vertical-align:middle;color:var(--text)}
+th{color:#fff;font-weight:600;padding:13px 16px;text-align:right;font-size:.87rem}
+td{padding:12px 16px;border-bottom:1px solid var(--border);font-size:.92rem;vertical-align:middle}
 tr:last-child td{border-bottom:none}
-tr:hover td{background:var(--blue-light);transition:background .15s}
+tr:hover td{background:var(--blue-light)}
 
-/* ── ATTENDANCE ── */
+/* ATTENDANCE */
 .abox{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
-.abox-header{
-  background:linear-gradient(135deg,var(--navy),var(--navy2));
-  color:#fff;padding:14px 20px;
-  font-weight:600;font-size:1rem;
-}
+.abox-header{background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:14px 20px;font-weight:600;font-size:.95rem}
 .ar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border)}
 .ar:last-child{border-bottom:none}
 .ar:hover{background:var(--blue-light)}
-.ar-name{font-weight:500;color:var(--text)}
-.ar-name small{color:var(--text3);font-weight:400;font-size:.82rem;margin-right:6px}
+.ar-name{font-weight:500}
+.ar-name small{color:var(--text3);font-weight:400;font-size:.8rem;margin-right:6px}
 .abtns{display:flex;gap:8px}
-.ab{
-  padding:6px 14px;border-radius:20px;
-  border:1.5px solid var(--border);
-  cursor:pointer;font-size:.82rem;font-family:Heebo;font-weight:500;
-  background:#fff;color:var(--text2);
-  transition:all .15s;
-}
+.ab{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);cursor:pointer;font-size:.82rem;font-family:Heebo;font-weight:500;background:#fff;color:var(--text2);transition:all .15s}
 .ab:hover{border-color:var(--navy);color:var(--navy)}
 .ab.sp{background:#eaf7f0;border-color:#27ae60;color:#1a7a4a;font-weight:600}
 .ab.sa{background:#fdf0f0;border-color:#e74c3c;color:#c0392b;font-weight:600}
 .ab.sl{background:#fff8e8;border-color:#c9a84c;color:#a07830;font-weight:600}
 
-/* ── SEARCH ── */
+/* SEARCH */
 .search-wrap{position:relative;margin-bottom:16px;max-width:340px}
-.search-wrap input{
-  width:100%;padding:10px 16px 10px 40px;
-  background:#fff;border:1.5px solid var(--border);
-  border-radius:30px;color:var(--text);
-  font-family:Heebo;font-size:.92rem;
-  transition:border-color .2s;
-}
+.search-wrap input{width:100%;padding:10px 16px 10px 40px;background:#fff;border:1.5px solid var(--border);border-radius:30px;color:var(--text);font-family:Heebo;font-size:.9rem}
 .search-wrap input:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(26,58,107,0.08)}
-.search-wrap::before{
-  content:"🔍";position:absolute;left:12px;top:50%;transform:translateY(-50%);
-  font-size:.85rem;pointer-events:none;
-}
+.search-wrap::before{content:"🔍";position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:.82rem;pointer-events:none}
 
-/* ── DATE INPUT ── */
-input[type=date],input[type=month]{
-  padding:9px 14px;
-  background:#fff;border:1.5px solid var(--border);
-  border-radius:20px;color:var(--text);
-  font-family:Heebo;font-size:.88rem;
-  cursor:pointer;
-}
+input[type=date],input[type=month]{padding:9px 14px;background:#fff;border:1.5px solid var(--border);border-radius:20px;color:var(--text);font-family:Heebo;font-size:.88rem;cursor:pointer}
 input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--navy)}
 
-/* ── BADGES ── */
+/* BADGES */
 .badge{display:inline-block;padding:3px 12px;border-radius:20px;font-size:.78rem;font-weight:600}
 .badge-p{background:#eaf7f0;color:#1a7a4a;border:1px solid #a8dfc0}
 .badge-a{background:#fdf0f0;color:#c0392b;border:1px solid #f5b8b8}
 .badge-l{background:#fff8e8;color:#a07830;border:1px solid #e8d090}
 
-/* ── MODAL ── */
+/* MODAL */
 .mb{display:none;position:fixed;inset:0;background:rgba(10,20,50,0.55);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
 .mb.on{display:flex}
-.md{
-  background:var(--bg2);border-radius:12px;
-  padding:36px;width:100%;max-width:500px;
-  box-shadow:0 16px 48px rgba(0,0,0,0.2);
-  position:relative;border-top:4px solid var(--navy);
-}
-.md-title{font-size:1.2rem;font-weight:700;color:var(--navy);margin-bottom:24px;display:flex;align-items:center;gap:10px}
-.md label{display:block;color:var(--text2);font-size:.85rem;font-weight:600;margin-bottom:5px}
-.md input{
-  width:100%;padding:11px 14px;margin-bottom:14px;
-  background:#f8fafd;border:1.5px solid var(--border);
-  border-radius:var(--r);color:var(--text);
-  font-family:Heebo;font-size:.92rem;
-}
-.md input:focus{outline:none;border-color:var(--navy);background:#fff;box-shadow:0 0 0 3px rgba(26,58,107,0.08)}
+.md{background:var(--bg2);border-radius:14px;padding:36px;width:100%;max-width:500px;box-shadow:0 20px 60px rgba(0,0,0,0.22);position:relative;border-top:4px solid var(--navy)}
+.md-title{font-size:1.15rem;font-weight:700;color:var(--navy);margin-bottom:22px;display:flex;align-items:center;gap:10px}
+.md label{display:block;color:var(--text2);font-size:.84rem;font-weight:600;margin-bottom:5px}
+.md input{width:100%;padding:11px 14px;margin-bottom:14px;background:#f8fafd;border:1.5px solid var(--border);border-radius:var(--r);color:var(--text);font-family:Heebo;font-size:.9rem}
+.md input:focus{outline:none;border-color:var(--navy);background:#fff}
 .ma{display:flex;gap:10px;margin-top:8px;justify-content:flex-end}
-.mc{position:absolute;top:14px;left:14px;background:none;border:none;color:var(--text3);font-size:1.3rem;cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.mc{position:absolute;top:14px;left:14px;background:none;border:none;color:var(--text3);font-size:1.3rem;cursor:pointer;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center}
 .mc:hover{background:var(--blue-light);color:var(--navy)}
 
-/* ── EMPTY STATE ── */
+/* COMING SOON */
+.coming-soon{
+  text-align:center;padding:80px 40px;
+  background:var(--bg2);border-radius:14px;border:1px solid var(--border);
+  box-shadow:var(--shadow);
+}
+.coming-soon .cs-icon{font-size:3.5rem;margin-bottom:16px;opacity:.6}
+.coming-soon h3{font-size:1.2rem;font-weight:700;color:var(--navy);margin-bottom:8px}
+.coming-soon p{color:var(--text2);font-size:.92rem}
+
 .empty{text-align:center;padding:60px 20px;color:var(--text3)}
 .empty .ic{font-size:3rem;margin-bottom:12px;opacity:.5}
-.empty p{font-size:.95rem}
-
-/* ── TOAST ── */
-#toast{
-  position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
-  background:var(--navy);color:#fff;
-  padding:12px 24px;border-radius:30px;
-  font-size:.9rem;font-weight:500;
-  z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;
-  box-shadow:var(--shadow2);display:flex;align-items:center;gap:8px;
-}
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 24px;border-radius:30px;font-size:.9rem;font-weight:500;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:var(--shadow2)}
 #toast.on{opacity:1}
-
 .ld{text-align:center;padding:48px;color:var(--text3)}
-
-/* ── REPORT ── */
-.report-summary{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
-  gap:12px;margin-bottom:20px;
-}
+.report-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
 .rs-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px;text-align:center;box-shadow:var(--shadow)}
-.rs-card .n{font-size:1.8rem;font-weight:700;color:var(--navy)}
-.rs-card .l{font-size:.8rem;color:var(--text2);margin-top:3px}
+.rs-card .n{font-size:1.7rem;font-weight:700;color:var(--navy)}
+.rs-card .l{font-size:.78rem;color:var(--text2);margin-top:3px}
 
-@media(max-width:680px){
-  header{padding:0 16px}
+@media(max-width:900px){
+  .modules-grid{grid-template-columns:repeat(2,1fr)}
+  .stats-bar{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:600px){
+  header{padding:0 14px}
   .nb .nb-label{display:none}
-  main{padding:16px}
-  .row-header{flex-direction:column;align-items:flex-start;gap:10px}
+  .modules-section{padding:20px 16px}
+  .modules-grid{grid-template-columns:1fr}
+  .inner-page{padding:18px 14px}
+  .home-hero{padding:28px 16px 36px}
 }
 </style>
 </head>
@@ -245,7 +268,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 
 <header>
   <div class="header-logo">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 90" width="160" height="65">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 90" width="155" height="63">
       <g stroke="#c5d8ff" stroke-width="1.8" stroke-linecap="round">
         <line x1="110" y1="42" x2="110" y2="8"/>
         <line x1="110" y1="42" x2="127" y2="10"/>
@@ -259,91 +282,204 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
       </g>
       <path d="M 88 42 A 22 22 0 0 1 132 42" fill="none" stroke="#c5d8ff" stroke-width="1.8"/>
       <line x1="55" y1="42" x2="165" y2="42" stroke="#c5d8ff" stroke-width="1.8"/>
-      <text x="110" y="60" text-anchor="middle" font-family="serif" font-size="9" fill="#a8c4f0" letter-spacing="0.3">ישיבת תומכי תמימים ליובאוויטש</text>
+      <text x="110" y="60" text-anchor="middle" font-family="serif" font-size="9" fill="#a8c4f0">ישיבת תומכי תמימים ליובאוויטש</text>
       <text x="110" y="80" text-anchor="middle" font-family="serif" font-size="17" font-weight="bold" fill="#fff">ראשון לציון</text>
     </svg>
+    <div class="header-divider"></div>
+    <div class="header-text"><strong>מערכת ניהול הישיבה</strong>פורטל הנהלה ומנהל</div>
   </div>
   <nav>
-    <button class="nb on" data-pg="dash" id="nb-dash"><span class="ic">🏠</span><span class="nb-label">בית</span></button>
-    <button class="nb" data-pg="students" id="nb-students"><span class="ic">👥</span><span class="nb-label">תלמידים</span></button>
-    <button class="nb" data-pg="attend" id="nb-attend"><span class="ic">✅</span><span class="nb-label">נוכחות</span></button>
-    <button class="nb" data-pg="reports" id="nb-reports"><span class="ic">📊</span><span class="nb-label">דוחות</span></button>
+    <button class="nb on" data-pg="home" id="nb-home">🏠 <span class="nb-label">ראשי</span></button>
+    <button class="nb" data-pg="students" id="nb-students">👥 <span class="nb-label">תלמידים</span></button>
+    <button class="nb" data-pg="attend" id="nb-attend">✅ <span class="nb-label">נוכחות</span></button>
+    <button class="nb" data-pg="reports" id="nb-reports">📊 <span class="nb-label">דוחות</span></button>
   </nav>
 </header>
 
 <main>
 
-  <!-- DASHBOARD -->
-  <div class="pg on" id="pg-dash">
-    <div class="pg-title">סקירה כללית <span id="td" style="font-size:.9rem;font-weight:400;color:var(--text2);margin-right:8px"></span></div>
-    <div class="grid">
-      <div class="card"><div class="n" id="s-tot">—</div><div class="l">סך תלמידים רשומים</div></div>
-      <div class="card"><div class="n" id="s-pre" style="color:#1a7a4a">—</div><div class="l">נוכחים היום</div></div>
-      <div class="card"><div class="n" id="s-abs" style="color:#c0392b">—</div><div class="l">נעדרים היום</div></div>
-      <div class="card"><div class="n" id="s-rate">—</div><div class="l">אחוז נוכחות</div></div>
-    </div>
-    <div class="row-header">
-      <div class="pg-title" style="margin-bottom:0;font-size:1.1rem">נוכחות מהירה — היום</div>
-      <button class="btn-gov gold" id="btn-save-q"><span class="btn-icon">💾</span> שמור נוכחות</button>
-    </div>
-    <div id="qa"><div class="ld">טוען...</div></div>
+<!-- ── HOME PAGE ── -->
+<div class="pg on" id="pg-home">
+  <div class="home-hero">
+    <div class="hero-date" id="hero-date"></div>
+    <div class="hero-title">שלום וברכה 👋</div>
+    <div class="hero-sub">ברוכים הבאים למערכת ניהול ישיבת תומכי תמימים ראשון לציון</div>
   </div>
 
-  <!-- STUDENTS -->
-  <div class="pg" id="pg-students">
-    <div class="row-header">
-      <div class="pg-title" style="margin-bottom:0">ניהול תלמידים</div>
-      <button class="btn-gov" id="btn-add-student"><span class="btn-icon">➕</span> הוסף תלמיד</button>
+  <div class="stats-bar">
+    <div class="stat-item"><div class="stat-num" id="s-tot">—</div><div class="stat-lbl">תלמידים רשומים</div></div>
+    <div class="stat-item"><div class="stat-num" style="color:#1a7a4a" id="s-pre">—</div><div class="stat-lbl">נוכחים היום</div></div>
+    <div class="stat-item"><div class="stat-num" style="color:#c0392b" id="s-abs">—</div><div class="stat-lbl">נעדרים היום</div></div>
+    <div class="stat-item"><div class="stat-num" id="s-rate">—</div><div class="stat-lbl">% נוכחות היום</div></div>
+  </div>
+
+  <div class="modules-section">
+    <div class="modules-title">מודולים</div>
+    <div class="modules-grid">
+
+      <button class="module-btn" data-pg="students" style="--color:#1a3a6b;--icon-bg:#eef2fa">
+        <div class="module-icon">👥</div>
+        <div class="module-info">
+          <div class="module-name">מצבת התלמידים</div>
+          <div class="module-desc">רשימת תלמידים, פרטים אישיים, ניהול ועריכה</div>
+        </div>
+        <span class="module-arrow">←</span>
+      </button>
+
+      <button class="module-btn" data-pg="attend" style="--color:#1a7a4a;--icon-bg:#eaf7f0">
+        <div class="module-icon">✅</div>
+        <div class="module-info">
+          <div class="module-name">שמירת הסדרים</div>
+          <div class="module-desc">רישום נוכחות יומית לשיעורים וסדרי לימוד</div>
+        </div>
+        <span class="module-arrow">←</span>
+      </button>
+
+      <button class="module-btn" data-pg="sleep" style="--color:#6b3a9a;--icon-bg:#f3eefa">
+        <div class="module-icon">🌙</div>
+        <div class="module-info">
+          <div class="module-name">זמן שינה</div>
+          <div class="module-desc">מעקב שעות שינה וכיבוי אורות</div>
+        </div>
+        <span class="module-arrow">←</span>
+      </button>
+
+      <button class="module-btn" data-pg="exams" style="--color:#a07830;--icon-bg:#fff8e8">
+        <div class="module-icon">📝</div>
+        <div class="module-info">
+          <div class="module-name">מבחנים</div>
+          <div class="module-desc">ניהול בחינות, ציונים ותוצאות</div>
+        </div>
+        <span class="module-arrow">←</span>
+      </button>
+
+      <button class="module-btn" data-pg="files" style="--color:#c0392b;--icon-bg:#fdf0f0">
+        <div class="module-icon">📁</div>
+        <div class="module-info">
+          <div class="module-name">תיקים אישיים</div>
+          <div class="module-desc">מסמכים, הערות ומעקב אישי לכל תלמיד</div>
+        </div>
+        <span class="module-arrow">←</span>
+      </button>
+
+      <button class="module-btn" data-pg="reports" style="--color:#0a6a8a;--icon-bg:#e8f5fa">
+        <div class="module-icon">📊</div>
+        <div class="module-info">
+          <div class="module-name">גיליונות חודשיים וסיכומים</div>
+          <div class="module-desc">דוחות נוכחות חודשיים, סטטיסטיקות וסיכומים</div>
+        </div>
+        <span class="module-arrow">←</span>
+      </button>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── STUDENTS ── -->
+<div class="pg" id="pg-students">
+  <div class="inner-page">
+    <div class="pg-title">
+      <button class="back-btn" data-pg="home">← חזרה</button>
+      👥 מצבת התלמידים
+      <button class="btn-gov" id="btn-add-student" style="margin-right:auto"><span class="btn-icon">➕</span> הוסף תלמיד</button>
     </div>
     <div class="search-wrap"><input type="text" id="search-st" placeholder="חיפוש לפי שם או שיעור..."></div>
     <div class="tw">
       <table>
-        <thead><tr><th>שם מלא</th><th>שיעור / כיתה</th><th>טלפון הורה</th><th>תאריך הצטרפות</th><th>פעולות</th></tr></thead>
+        <thead><tr><th>שם מלא</th><th>שיעור</th><th>טלפון הורה</th><th>תאריך הצטרפות</th><th>פעולות</th></tr></thead>
         <tbody id="stb"><tr><td colspan="5"><div class="ld">טוען...</div></td></tr></tbody>
       </table>
     </div>
   </div>
+</div>
 
-  <!-- ATTENDANCE -->
-  <div class="pg" id="pg-attend">
-    <div class="row-header">
-      <div class="pg-title" style="margin-bottom:0">רישום נוכחות</div>
-      <div style="display:flex;gap:10px;align-items:center">
+<!-- ── ATTENDANCE ── -->
+<div class="pg" id="pg-attend">
+  <div class="inner-page">
+    <div class="pg-title">
+      <button class="back-btn" data-pg="home">← חזרה</button>
+      ✅ שמירת הסדרים
+      <div style="display:flex;gap:10px;align-items:center;margin-right:auto">
         <input type="date" id="dp">
         <button class="btn-gov" id="btn-save-a"><span class="btn-icon">💾</span> שמור</button>
       </div>
     </div>
     <div id="al"></div>
   </div>
+</div>
 
-  <!-- REPORTS -->
-  <div class="pg" id="pg-reports">
-    <div class="row-header">
-      <div class="pg-title" style="margin-bottom:0">דוחות נוכחות</div>
-      <div style="display:flex;gap:10px;align-items:center">
+<!-- ── REPORTS ── -->
+<div class="pg" id="pg-reports">
+  <div class="inner-page">
+    <div class="pg-title">
+      <button class="back-btn" data-pg="home">← חזרה</button>
+      📊 גיליונות חודשיים וסיכומים
+      <div style="display:flex;gap:10px;align-items:center;margin-right:auto">
         <input type="month" id="rm">
         <button class="btn-gov" id="btn-load-r"><span class="btn-icon">📊</span> הצג דוח</button>
       </div>
     </div>
     <div id="rc"></div>
   </div>
+</div>
+
+<!-- ── SLEEP ── -->
+<div class="pg" id="pg-sleep">
+  <div class="inner-page">
+    <div class="pg-title">
+      <button class="back-btn" data-pg="home">← חזרה</button>
+      🌙 זמן שינה
+    </div>
+    <div class="coming-soon">
+      <div class="cs-icon">🌙</div>
+      <h3>מודול זמן שינה</h3>
+      <p>מודול זה בפיתוח — יאפשר מעקב שעות שינה וכיבוי אורות</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── EXAMS ── -->
+<div class="pg" id="pg-exams">
+  <div class="inner-page">
+    <div class="pg-title">
+      <button class="back-btn" data-pg="home">← חזרה</button>
+      📝 מבחנים
+    </div>
+    <div class="coming-soon">
+      <div class="cs-icon">📝</div>
+      <h3>מודול מבחנים</h3>
+      <p>מודול זה בפיתוח — יאפשר ניהול בחינות, ציונים ותוצאות</p>
+    </div>
+  </div>
+</div>
+
+<!-- ── FILES ── -->
+<div class="pg" id="pg-files">
+  <div class="inner-page">
+    <div class="pg-title">
+      <button class="back-btn" data-pg="home">← חזרה</button>
+      📁 תיקים אישיים
+    </div>
+    <div class="coming-soon">
+      <div class="cs-icon">📁</div>
+      <h3>מודול תיקים אישיים</h3>
+      <p>מודול זה בפיתוח — יאפשר ניהול מסמכים והערות אישיות לכל תלמיד</p>
+    </div>
+  </div>
+</div>
 
 </main>
 
-<!-- MODAL הוסף/ערוך תלמיד -->
+<!-- MODAL -->
 <div class="mb" id="ms">
   <div class="md">
     <button class="mc" id="btn-close-modal">✕</button>
     <div class="md-title"><span>👤</span><span id="mt">הוסף תלמיד</span></div>
     <input type="hidden" id="sid">
-    <label>שם מלא *</label>
-    <input type="text" id="sn" placeholder="ישראל ישראלי">
-    <label>שיעור / כיתה</label>
-    <input type="text" id="sc" placeholder="שיעור א׳">
-    <label>טלפון הורה</label>
-    <input type="tel" id="sp" placeholder="050-0000000">
-    <label>הערות</label>
-    <input type="text" id="snotes" placeholder="הערות נוספות">
+    <label>שם מלא *</label><input type="text" id="sn" placeholder="ישראל ישראלי">
+    <label>שיעור / כיתה</label><input type="text" id="sc" placeholder="שיעור א׳">
+    <label>טלפון הורה</label><input type="tel" id="sp" placeholder="050-0000000">
+    <label>הערות</label><input type="text" id="snotes" placeholder="הערות">
     <div class="ma">
       <button class="btn-gov outline" id="btn-cancel-modal">ביטול</button>
       <button class="btn-gov" id="btn-save-student"><span class="btn-icon">💾</span> שמור</button>
@@ -358,39 +494,42 @@ var SB=supabase.createClient("https://hdcsqajavhxsbscgnpob.supabase.co","eyJhbGc
 var students=[],todayAtt={},curAtt={};
 var TODAY=new Date().toISOString().split("T")[0];
 
-function fmtD(d){
-  return new Date(d+"T12:00:00").toLocaleDateString("he-IL",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
-}
+function fmtD(d){return new Date(d+"T12:00:00").toLocaleDateString("he-IL",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}
+function fmtDShort(d){return new Date(d+"T12:00:00").toLocaleDateString("he-IL",{weekday:"long",day:"numeric",month:"long"})}
 
 // Init UI
-document.getElementById("td").textContent=fmtD(TODAY);
+document.getElementById("hero-date").textContent=fmtD(TODAY);
 document.getElementById("dp").value=TODAY;
 document.getElementById("rm").value=TODAY.substring(0,7);
 
-// Nav
-document.querySelectorAll(".nb[data-pg]").forEach(function(btn){
-  btn.addEventListener("click",function(){
-    var n=this.getAttribute("data-pg");
-    document.querySelectorAll(".pg").forEach(function(p){p.classList.remove("on")});
-    document.querySelectorAll(".nb").forEach(function(b){b.classList.remove("on")});
-    document.getElementById("pg-"+n).classList.add("on");
-    document.getElementById("nb-"+n).classList.add("on");
-    if(n==="students")loadSt();
-    else if(n==="attend")loadA(document.getElementById("dp").value);
-    else if(n==="dash")loadDash();
-  });
-});
+// ── NAVIGATION ──
+function showPg(n){
+  document.querySelectorAll(".pg").forEach(function(p){p.classList.remove("on")});
+  document.querySelectorAll(".nb").forEach(function(b){b.classList.remove("on")});
+  var pg=document.getElementById("pg-"+n);
+  if(pg)pg.classList.add("on");
+  var nb=document.getElementById("nb-"+n);
+  if(nb)nb.classList.add("on");
+  else{var nbHome=document.getElementById("nb-home");if(nbHome)nbHome.classList.remove("on")}
+  window.scrollTo(0,0);
+  if(n==="students")loadSt();
+  else if(n==="attend")loadA(document.getElementById("dp").value);
+  else if(n==="reports"){}
+  else if(n==="home")loadDash();
+}
 
-// Buttons
-document.getElementById("btn-save-q").addEventListener("click",function(){saveQ()});
-document.getElementById("btn-add-student").addEventListener("click",function(){openAdd()});
-document.getElementById("btn-save-a").addEventListener("click",function(){saveA()});
-document.getElementById("btn-load-r").addEventListener("click",function(){loadR()});
-document.getElementById("btn-close-modal").addEventListener("click",function(){cm("ms")});
-document.getElementById("btn-cancel-modal").addEventListener("click",function(){cm("ms")});
-document.getElementById("btn-save-student").addEventListener("click",function(){saveS()});
-document.getElementById("search-st").addEventListener("input",function(){filt(this.value)});
-document.getElementById("dp").addEventListener("change",function(){loadA(this.value)});
+// Header nav
+document.querySelectorAll(".nb[data-pg]").forEach(function(btn){
+  btn.addEventListener("click",function(){showPg(this.getAttribute("data-pg"))});
+});
+// Module buttons
+document.querySelectorAll(".module-btn[data-pg]").forEach(function(btn){
+  btn.addEventListener("click",function(){showPg(this.getAttribute("data-pg"))});
+});
+// Back buttons
+document.querySelectorAll(".back-btn[data-pg]").forEach(function(btn){
+  btn.addEventListener("click",function(){showPg(this.getAttribute("data-pg"))});
+});
 
 // ── DASHBOARD ──
 function loadDash(){
@@ -404,35 +543,8 @@ function loadDash(){
       document.getElementById("s-pre").textContent=p;
       document.getElementById("s-abs").textContent=ab;
       document.getElementById("s-rate").textContent=(students.length?Math.round(p/students.length*100):0)+"%";
-      todayAtt={};
-      a.forEach(function(x){todayAtt[x.student_id]=x.status});
-      renderQ();
     });
   });
-}
-
-function renderQ(){
-  var el=document.getElementById("qa");
-  if(!students.length){
-    el.innerHTML="<div class=\"empty\"><div class=\"ic\">👥</div><p>אין תלמידים רשומים — לחץ <b>תלמידים</b> להוספה</p></div>";
-    return;
-  }
-  var html="<div class=\"abox\"><div class=\"abox-header\">"+fmtD(TODAY)+"</div>";
-  students.forEach(function(s){
-    html+="<div class=\"ar\">";
-    html+="<span class=\"ar-name\">"+s.name+(s.class_name?"<small>"+s.class_name+"</small>":"")+"</span>";
-    html+="<div class=\"abtns\">";
-    html+="<button class=\"ab"+(todayAtt[s.id]==="present"?" sp":"")+"\" data-id=\""+s.id+"\" data-st=\"present\" data-map=\"q\">✓ נוכח</button>";
-    html+="<button class=\"ab"+(todayAtt[s.id]==="late"?" sl":"")+"\" data-id=\""+s.id+"\" data-st=\"late\" data-map=\"q\">⏰ איחור</button>";
-    html+="<button class=\"ab"+(todayAtt[s.id]==="absent"?" sa":"")+"\" data-id=\""+s.id+"\" data-st=\"absent\" data-map=\"q\">✗ נעדר</button>";
-    html+="</div></div>";
-  });
-  el.innerHTML=html+"</div>";
-  bindAtt();
-}
-
-function saveQ(){
-  saveAD(TODAY,todayAtt).then(function(){loadDash()});
 }
 
 // ── STUDENTS ──
@@ -444,71 +556,35 @@ function loadSt(){
 }
 function renderSt(list){
   var tb=document.getElementById("stb");
-  if(!list.length){
-    tb.innerHTML="<tr><td colspan=\"5\"><div class=\"empty\"><div class=\"ic\">👥</div><p>אין תלמידים רשומים</p></div></td></tr>";
-    return;
-  }
+  if(!list.length){tb.innerHTML="<tr><td colspan=\"5\"><div class=\"empty\"><div class=\"ic\">👥</div><p>אין תלמידים רשומים</p></div></td></tr>";return}
   var html="";
   list.forEach(function(s){
-    html+="<tr><td><strong>"+s.name+"</strong></td>";
-    html+="<td>"+(s.class_name||"—")+"</td>";
+    html+="<tr><td><strong>"+s.name+"</strong></td><td>"+(s.class_name||"—")+"</td>";
     html+="<td style=\"direction:ltr\">"+(s.parent_phone||"—")+"</td>";
     html+="<td>"+(s.created_at?new Date(s.created_at).toLocaleDateString("he-IL"):"—")+"</td>";
     html+="<td style=\"display:flex;gap:8px\">";
     html+="<button class=\"btn-gov outline\" style=\"padding:6px 14px;font-size:.82rem\" data-edit=\""+s.id+"\">✏️ עריכה</button>";
-    html+="<button class=\"btn-gov\" style=\"padding:6px 14px;font-size:.82rem;background:#c0392b;border-color:#c0392b\" data-del=\""+s.id+"\" data-name=\""+s.name+"\">🗑️</button>";
+    html+="<button class=\"btn-gov\" style=\"padding:6px 12px;font-size:.82rem;background:#c0392b;border-color:#c0392b\" data-del=\""+s.id+"\" data-name=\""+s.name+"\">🗑️</button>";
     html+="</td></tr>";
   });
   tb.innerHTML=html;
-  tb.querySelectorAll("[data-edit]").forEach(function(btn){
-    btn.addEventListener("click",function(){editS(this.getAttribute("data-edit"))});
-  });
-  tb.querySelectorAll("[data-del]").forEach(function(btn){
-    btn.addEventListener("click",function(){delS(this.getAttribute("data-del"),this.getAttribute("data-name"))});
-  });
+  tb.querySelectorAll("[data-edit]").forEach(function(b){b.addEventListener("click",function(){editS(this.getAttribute("data-edit"))})});
+  tb.querySelectorAll("[data-del]").forEach(function(b){b.addEventListener("click",function(){delS(this.getAttribute("data-del"),this.getAttribute("data-name"))})});
 }
-function filt(q){
-  renderSt(students.filter(function(s){return s.name.includes(q)||(s.class_name||"").includes(q)}));
-}
-function openAdd(){
-  document.getElementById("mt").textContent="הוסף תלמיד";
-  ["sid","sn","sc","sp","snotes"].forEach(function(id){document.getElementById(id).value=""});
-  document.getElementById("ms").classList.add("on");
-}
-function editS(id){
-  var s=students.find(function(x){return x.id==id});
-  if(!s)return;
-  document.getElementById("mt").textContent="עריכת תלמיד";
-  document.getElementById("sid").value=s.id;
-  document.getElementById("sn").value=s.name;
-  document.getElementById("sc").value=s.class_name||"";
-  document.getElementById("sp").value=s.parent_phone||"";
-  document.getElementById("snotes").value=s.notes||"";
-  document.getElementById("ms").classList.add("on");
-}
-function saveS(){
-  var name=document.getElementById("sn").value.trim();
-  if(!name){toast("נא להכניס שם");return}
-  var id=document.getElementById("sid").value;
-  var d={name:name,class_name:document.getElementById("sc").value.trim(),parent_phone:document.getElementById("sp").value.trim(),notes:document.getElementById("snotes").value.trim(),active:true};
-  var p=id?SB.from("students").update(d).eq("id",id):SB.from("students").insert(d);
-  p.then(function(){toast(id?"✅ תלמיד עודכן":"✅ תלמיד נוסף");cm("ms");loadSt()});
-}
-function delS(id,name){
-  if(!confirm("למחוק את "+name+"?"))return;
-  SB.from("students").update({active:false}).eq("id",id).then(function(){toast("🗑️ תלמיד הוסר");loadSt()});
-}
+function filt(q){renderSt(students.filter(function(s){return s.name.includes(q)||(s.class_name||"").includes(q)}))}
+function openAdd(){document.getElementById("mt").textContent="הוסף תלמיד";["sid","sn","sc","sp","snotes"].forEach(function(id){document.getElementById(id).value=""});document.getElementById("ms").classList.add("on")}
+function editS(id){var s=students.find(function(x){return x.id==id});if(!s)return;document.getElementById("mt").textContent="עריכת תלמיד";document.getElementById("sid").value=s.id;document.getElementById("sn").value=s.name;document.getElementById("sc").value=s.class_name||"";document.getElementById("sp").value=s.parent_phone||"";document.getElementById("snotes").value=s.notes||"";document.getElementById("ms").classList.add("on")}
+function saveS(){var name=document.getElementById("sn").value.trim();if(!name){toast("נא להכניס שם");return}var id=document.getElementById("sid").value;var d={name:name,class_name:document.getElementById("sc").value.trim(),parent_phone:document.getElementById("sp").value.trim(),notes:document.getElementById("snotes").value.trim(),active:true};var p=id?SB.from("students").update(d).eq("id",id):SB.from("students").insert(d);p.then(function(){toast(id?"✅ תלמיד עודכן":"✅ תלמיד נוסף");cm("ms");loadSt()})}
+function delS(id,name){if(!confirm("למחוק את "+name+"?"))return;SB.from("students").update({active:false}).eq("id",id).then(function(){toast("🗑️ הוסר");loadSt()})}
 
 // ── ATTENDANCE ──
 function loadA(date){
-  var el=document.getElementById("al");
-  el.innerHTML="<div class=\"ld\">טוען...</div>";
+  var el=document.getElementById("al");el.innerHTML="<div class=\"ld\">טוען...</div>";
   var p1=students.length?Promise.resolve({data:students}):SB.from("students").select("*").eq("active",true).order("name");
   p1.then(function(r){
     if(!students.length)students=r.data||[];
     SB.from("attendance").select("*").eq("date",date).then(function(r2){
-      curAtt={};
-      (r2.data||[]).forEach(function(x){curAtt[x.student_id]=x.status});
+      curAtt={};(r2.data||[]).forEach(function(x){curAtt[x.student_id]=x.status});
       renderAtt(date);
     });
   });
@@ -518,9 +594,7 @@ function renderAtt(date){
   if(!students.length){el.innerHTML="<div class=\"empty\"><div class=\"ic\">👥</div><p>אין תלמידים</p></div>";return}
   var html="<div class=\"abox\"><div class=\"abox-header\">"+fmtD(date)+"</div>";
   students.forEach(function(s){
-    html+="<div class=\"ar\">";
-    html+="<span class=\"ar-name\">"+s.name+(s.class_name?"<small>"+s.class_name+"</small>":"")+"</span>";
-    html+="<div class=\"abtns\">";
+    html+="<div class=\"ar\"><span class=\"ar-name\">"+s.name+(s.class_name?"<small>"+s.class_name+"</small>":"")+"</span><div class=\"abtns\">";
     html+="<button class=\"ab"+(curAtt[s.id]==="present"?" sp":"")+"\" data-id=\""+s.id+"\" data-st=\"present\" data-map=\"c\">✓ נוכח</button>";
     html+="<button class=\"ab"+(curAtt[s.id]==="late"?" sl":"")+"\" data-id=\""+s.id+"\" data-st=\"late\" data-map=\"c\">⏰ איחור</button>";
     html+="<button class=\"ab"+(curAtt[s.id]==="absent"?" sa":"")+"\" data-id=\""+s.id+"\" data-st=\"absent\" data-map=\"c\">✗ נעדר</button>";
@@ -529,15 +603,12 @@ function renderAtt(date){
   el.innerHTML=html+"</div>";
   bindAtt();
 }
-function saveA(){
-  saveAD(document.getElementById("dp").value,curAtt);
-}
+function saveA(){saveAD(document.getElementById("dp").value,curAtt)}
 function saveAD(date,map){
   var u=Object.entries(map).map(function(e){return{student_id:parseInt(e[0]),date:date,status:e[1]}});
   if(!u.length){toast("לא נבחרה נוכחות");return Promise.resolve()}
   return SB.from("attendance").upsert(u,{onConflict:"student_id,date"}).then(function(r){
-    if(r.error)toast("שגיאה: "+r.error.message);
-    else toast("✅ נוכחות נשמרה בהצלחה!");
+    if(r.error)toast("שגיאה: "+r.error.message);else toast("✅ נוכחות נשמרה!");
   });
 }
 
@@ -549,37 +620,18 @@ function loadR(){
   SB.from("attendance").select("*").gte("date",y+"-"+m+"-01").lte("date",y+"-"+m+"-31").then(function(ra){
     SB.from("students").select("*").eq("active",true).order("name").then(function(rs){
       var s=rs.data||[];var a=ra.data||[];
-      if(!s.length){el.innerHTML="<div class=\"empty\"><div class=\"ic\">📊</div><p>אין נתונים לחודש זה</p></div>";return}
-      var totalP=0,totalL=0,totalA=0,totalDays=0;
-      var rows=s.map(function(x){
-        var mine=a.filter(function(r){return r.student_id==x.id});
-        var p=mine.filter(function(r){return r.status==="present"}).length;
-        var l=mine.filter(function(r){return r.status==="late"}).length;
-        var ab=mine.filter(function(r){return r.status==="absent"}).length;
-        var tot=p+l+ab;
-        var rate=tot?Math.round((p+l)/tot*100):0;
-        totalP+=p;totalL+=l;totalA+=ab;totalDays+=tot;
-        return Object.assign({},x,{p:p,l:l,ab:ab,tot:tot,rate:rate});
-      });
-      var avgRate=totalDays?Math.round((totalP+totalL)/totalDays*100):0;
+      if(!s.length){el.innerHTML="<div class=\"empty\"><div class=\"ic\">📊</div><p>אין נתונים</p></div>";return}
+      var totP=0,totL=0,totA=0,totD=0;
+      var rows=s.map(function(x){var mine=a.filter(function(r){return r.student_id==x.id});var p=mine.filter(function(r){return r.status==="present"}).length,l=mine.filter(function(r){return r.status==="late"}).length,ab=mine.filter(function(r){return r.status==="absent"}).length,tot=p+l+ab,rate=tot?Math.round((p+l)/tot*100):0;totP+=p;totL+=l;totA+=ab;totD+=tot;return Object.assign({},x,{p:p,l:l,ab:ab,tot:tot,rate:rate})});
+      var avg=totD?Math.round((totP+totL)/totD*100):0;
       var html="<div class=\"report-summary\">";
-      html+="<div class=\"rs-card\"><div class=\"n\" style=\"color:#1a7a4a\">"+totalP+"</div><div class=\"l\">סה"כ נוכחויות</div></div>";
-      html+="<div class=\"rs-card\"><div class=\"n\" style=\"color:#a07830\">"+totalL+"</div><div class=\"l\">סה"כ איחורים</div></div>";
-      html+="<div class=\"rs-card\"><div class=\"n\" style=\"color:#c0392b\">"+totalA+"</div><div class=\"l\">סה"כ היעדרויות</div></div>";
-      html+="<div class=\"rs-card\"><div class=\"n\" style=\"color:var(--navy)\">"+avgRate+"%</div><div class=\"l\">ממוצע נוכחות</div></div>";
-      html+="</div>";
-      html+="<div class=\"tw\"><table><thead><tr><th>תלמיד</th><th>שיעור</th><th>נוכח</th><th>איחור</th><th>נעדר</th><th>ימים</th><th>% נוכחות</th></tr></thead><tbody>";
-      rows.forEach(function(r){
-        var cls=r.rate>=80?"badge-p":r.rate>=60?"badge-l":"badge-a";
-        html+="<tr><td><strong>"+r.name+"</strong></td><td>"+(r.class_name||"—")+"</td>";
-        html+="<td style=\"color:#1a7a4a;font-weight:600\">"+r.p+"</td>";
-        html+="<td style=\"color:#a07830;font-weight:600\">"+r.l+"</td>";
-        html+="<td style=\"color:#c0392b;font-weight:600\">"+r.ab+"</td>";
-        html+="<td>"+r.tot+"</td>";
-        html+="<td><span class=\"badge "+cls+"\">"+r.rate+"%</span></td></tr>";
-      });
-      html+="</tbody></table></div>";
-      el.innerHTML=html;
+      html+="<div class=\"rs-card\"><div class=\"n\" style=\"color:#1a7a4a\">"+totP+"</div><div class=\"l\">נוכחויות</div></div>";
+      html+="<div class=\"rs-card\"><div class=\"n\" style=\"color:#a07830\">"+totL+"</div><div class=\"l\">איחורים</div></div>";
+      html+="<div class=\"rs-card\"><div class=\"n\" style=\"color:#c0392b\">"+totA+"</div><div class=\"l\">היעדרויות</div></div>";
+      html+="<div class=\"rs-card\"><div class=\"n\" style=\"color:var(--navy)\">"+avg+"%</div><div class=\"l\">ממוצע נוכחות</div></div>";
+      html+="</div><div class=\"tw\"><table><thead><tr><th>תלמיד</th><th>שיעור</th><th>נוכח</th><th>איחור</th><th>נעדר</th><th>ימים</th><th>% נוכחות</th></tr></thead><tbody>";
+      rows.forEach(function(r){var cls=r.rate>=80?"badge-p":r.rate>=60?"badge-l":"badge-a";html+="<tr><td><strong>"+r.name+"</strong></td><td>"+(r.class_name||"—")+"</td><td style=\"color:#1a7a4a;font-weight:600\">"+r.p+"</td><td style=\"color:#a07830;font-weight:600\">"+r.l+"</td><td style=\"color:#c0392b;font-weight:600\">"+r.ab+"</td><td>"+r.tot+"</td><td><span class=\"badge "+cls+"\">"+r.rate+"%</span></td></tr>"});
+      el.innerHTML=html+"</tbody></table></div>";
     });
   });
 }
@@ -588,27 +640,25 @@ function loadR(){
 function bindAtt(){
   document.querySelectorAll(".ab[data-id]").forEach(function(btn){
     btn.addEventListener("click",function(){
-      var id=this.getAttribute("data-id");
-      var st=this.getAttribute("data-st");
-      var map=this.getAttribute("data-map");
-      if(map==="q")todayAtt[id]=st;
-      else curAtt[id]=st;
-      this.closest(".abtns").querySelectorAll(".ab").forEach(function(b){
-        b.classList.remove("sp","sl","sa");
-      });
-      if(st==="present")this.classList.add("sp");
-      else if(st==="late")this.classList.add("sl");
-      else this.classList.add("sa");
+      var id=this.getAttribute("data-id");var st=this.getAttribute("data-st");var map=this.getAttribute("data-map");
+      if(map==="q")todayAtt[id]=st;else curAtt[id]=st;
+      this.closest(".abtns").querySelectorAll(".ab").forEach(function(b){b.classList.remove("sp","sl","sa")});
+      if(st==="present")this.classList.add("sp");else if(st==="late")this.classList.add("sl");else this.classList.add("sa");
     });
   });
 }
 function cm(id){document.getElementById(id).classList.remove("on")}
-var tt;
-function toast(m){
-  var t=document.getElementById("toast");
-  t.textContent=m;t.classList.add("on");
-  clearTimeout(tt);tt=setTimeout(function(){t.classList.remove("on")},2800);
-}
+var tt;function toast(m){var t=document.getElementById("toast");t.textContent=m;t.classList.add("on");clearTimeout(tt);tt=setTimeout(function(){t.classList.remove("on")},2800)}
+
+// Buttons
+document.getElementById("btn-add-student").addEventListener("click",function(){openAdd()});
+document.getElementById("btn-save-a").addEventListener("click",function(){saveA()});
+document.getElementById("btn-load-r").addEventListener("click",function(){loadR()});
+document.getElementById("btn-close-modal").addEventListener("click",function(){cm("ms")});
+document.getElementById("btn-cancel-modal").addEventListener("click",function(){cm("ms")});
+document.getElementById("btn-save-student").addEventListener("click",function(){saveS()});
+document.getElementById("search-st").addEventListener("input",function(){filt(this.value)});
+document.getElementById("dp").addEventListener("change",function(){loadA(this.value)});
 
 loadDash();
 </script>
