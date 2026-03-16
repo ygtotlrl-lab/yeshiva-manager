@@ -7,38 +7,27 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;700;900&family=Heebo:wght@300;400;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0f0e0a;--bg2:#1a1812;--bg3:#242018;--gold:#c9a84c;--gold2:#e8c96a;--text:#f0e8d0;--text2:#b8a880;--text3:#7a6e58;--red:#c0392b;--border:#3a3428;--r:10px}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:Heebo,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
-#setup{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
-.box{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:48px;max-width:480px;width:100%;text-align:center}
-.box h1{font-family:'Frank Ruhl Libre',serif;font-size:2rem;color:var(--gold);margin-bottom:8px}
-.box p{color:var(--text2);margin-bottom:32px}
-label{display:block;text-align:right;margin-bottom:6px;color:var(--text2);font-size:.9rem}
-input[type=text]{width:100%;padding:12px 16px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:Heebo;font-size:.95rem;margin-bottom:16px;direction:ltr;text-align:left}
-input:focus{outline:none;border-color:var(--gold)}
-.btn-p{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--bg);border:none;padding:14px;border-radius:var(--r);font-size:1rem;font-weight:700;cursor:pointer;width:100%;font-family:Heebo}
-.err{color:var(--red);font-size:.85rem;margin-top:12px}
+:root{--bg:#0f0e0a;--bg2:#1a1812;--bg3:#242018;--gold:#c9a84c;--gold2:#e8c96a;--gold3:#f5e0a0;--text:#f0e8d0;--text2:#b8a880;--text3:#7a6e58;--red:#c0392b;--border:#3a3428;--r:10px}
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:Heebo,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;direction:rtl}
 #app{display:none}
 header{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:64px;position:sticky;top:0;z-index:100}
-.logo{font-family:'Frank Ruhl Libre',serif;font-size:1.4rem;color:var(--gold);display:flex;align-items:center;gap:10px}
+.logo{font-family:"Frank Ruhl Libre",serif;font-size:1.4rem;color:var(--gold);display:flex;align-items:center;gap:10px}
 nav{display:flex;gap:4px}
 .nb{background:none;border:none;color:var(--text2);padding:8px 14px;border-radius:8px;cursor:pointer;font-family:Heebo;font-size:.9rem;display:flex;align-items:center;gap:6px;transition:all .2s}
 .nb:hover,.nb.on{background:var(--bg3);color:var(--gold)}
 main{padding:32px 24px;max-width:1200px;margin:0 auto}
 .pg{display:none}.pg.on{display:block}
 .ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
-.ph h2{font-family:'Frank Ruhl Libre',serif;font-size:1.8rem;color:#f5e0a0}
+.ph h2{font-family:"Frank Ruhl Libre",serif;font-size:1.8rem;color:var(--gold3)}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:32px}
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;text-align:center}
-.card .n{font-family:'Frank Ruhl Libre',serif;font-size:2.5rem;color:var(--gold);line-height:1}
+.card .n{font-family:"Frank Ruhl Libre",serif;font-size:2.5rem;color:var(--gold);line-height:1}
 .card .l{color:var(--text2);font-size:.9rem;margin-top:6px}
 .tw{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
 table{width:100%;border-collapse:collapse}
 th{background:var(--bg3);color:var(--gold2);font-weight:600;padding:14px 16px;text-align:right;font-size:.9rem;border-bottom:1px solid var(--border)}
 td{padding:12px 16px;border-bottom:1px solid var(--border);font-size:.95rem;vertical-align:middle}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:rgba(201,168,76,.04)}
+tr:last-child td{border-bottom:none}tr:hover td{background:rgba(201,168,76,.04)}
 .bg{background:none;border:1px solid var(--border);color:var(--text2);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:.9rem;font-family:Heebo;transition:all .2s}
 .bg:hover{border-color:var(--gold);color:var(--gold)}
 .gg{background:var(--gold);color:var(--bg);border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:.95rem;font-weight:700;font-family:Heebo;display:flex;align-items:center;gap:8px}
@@ -51,7 +40,7 @@ tr:hover td{background:rgba(201,168,76,.04)}
 .mb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:center;justify-content:center}
 .mb.on{display:flex}
 .md{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:36px;width:100%;max-width:480px;position:relative}
-.md h3{font-family:'Frank Ruhl Libre',serif;font-size:1.5rem;color:#f5e0a0;margin-bottom:24px}
+.md h3{font-family:"Frank Ruhl Libre",serif;font-size:1.5rem;color:var(--gold3);margin-bottom:24px}
 .md label{display:block;color:var(--text2);font-size:.9rem;margin-bottom:6px}
 .md input{width:100%;padding:11px 14px;margin-bottom:16px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:Heebo;font-size:.95rem}
 .md input:focus{outline:none;border-color:var(--gold)}
@@ -61,7 +50,7 @@ tr:hover td{background:rgba(201,168,76,.04)}
 .ar{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
 .ar:last-child{border-bottom:none}
 .abox{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:20px;margin-bottom:20px}
-.abox h3{font-family:'Frank Ruhl Libre',serif;color:var(--gold2);margin-bottom:16px;font-size:1.2rem}
+.abox h3{font-family:"Frank Ruhl Libre",serif;color:var(--gold2);margin-bottom:16px;font-size:1.2rem}
 .abtns{display:flex;gap:8px}
 .ab{padding:6px 12px;border-radius:6px;border:1px solid var(--border);cursor:pointer;font-size:.85rem;font-family:Heebo;background:none;color:var(--text3);transition:all .15s}
 .ab.sp{background:rgba(39,174,96,.2);border-color:#27ae60;color:#4cd97a}
@@ -74,22 +63,12 @@ tr:hover td{background:rgba(201,168,76,.04)}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--gold);color:var(--gold2);padding:12px 24px;border-radius:30px;font-size:.95rem;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none}
 #toast.on{opacity:1}
 .ld{text-align:center;padding:40px;color:var(--text3)}
+#loading{display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:"Frank Ruhl Libre",serif;font-size:1.5rem;color:var(--gold)}
 @media(max-width:640px){header{padding:0 12px}.nl{display:none}main{padding:16px 12px}.md{margin:16px;padding:24px}}
 </style>
 </head>
 <body>
-<div id="setup">
-  <div class="box">
-    <h1>📚 מערכת ניהול ישיבה</h1>
-    <p>הגדרה ראשונית — הכנס פרטי Supabase</p>
-    <label>Supabase URL</label>
-    <input id="su" type="text" placeholder="https://xxxx.supabase.co" value="https://hdcsqajavhxsbscgnpob.supabase.co">
-    <label>Supabase Anon Key</label>
-    <input id="sk" type="text" placeholder="eyJ...">
-    <button class="btn-p" onclick="init()">התחל ←</button>
-    <div id="er" class="err"></div>
-  </div>
-</div>
+<div id="loading">📚 טוען...</div>
 <div id="app">
   <header>
     <div class="logo">📚 מערכת ניהול ישיבה</div>
@@ -139,23 +118,22 @@ tr:hover td{background:rgba(201,168,76,.04)}
 </div></div>
 <div id="toast"></div>
 <script>
-let SB=null,students=[],todayAtt={},curAtt={};
+const SUPABASE_URL='https://hdcsqajavhxsbscgnpob.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkY3NxYWphdmh4c2JzY2ducG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NTQwMjIsImV4cCI6MjA4OTIzMDAyMn0.hf_jjLyAZk3IS6IPF_skyEEsrG50AXvJqI790qdJdlo';
+let SB,students=[],todayAtt={},curAtt={};
 const TODAY=new Date().toISOString().split('T')[0];
 function fmtD(d){return new Date(d+'T12:00:00').toLocaleDateString('he-IL',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}
-async function init(){
-  const u=document.getElementById('su').value.trim(),k=document.getElementById('sk').value.trim();
-  if(!u||!k){document.getElementById('er').textContent='נא להכניס URL ומפתח';return}
+async function start(){
   try{
-    SB=supabase.createClient(u,k);
+    SB=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
     await SB.from('students').select('id').limit(1);
-    localStorage.setItem('sbu',u);localStorage.setItem('sbk',k);
-    document.getElementById('setup').style.display='none';
+    document.getElementById('loading').style.display='none';
     document.getElementById('app').style.display='block';
     document.getElementById('td').textContent=fmtD(TODAY);
     document.getElementById('dp').value=TODAY;
     document.getElementById('rm').value=TODAY.substring(0,7);
     await loadDash();
-  }catch(e){document.getElementById('er').textContent='שגיאה: '+e.message}
+  }catch(e){document.getElementById('loading').textContent='שגיאה: '+e.message}
 }
 function pg(n){
   document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
@@ -181,19 +159,12 @@ async function loadDash(){
 }
 function renderQ(){
   const el=document.getElementById('qa');
-  if(!students.length){el.innerHTML='<div class="empty"><div class="ic">👥</div><p>אין תלמידים</p></div>';return}
+  if(!students.length){el.innerHTML='<div class="empty"><div class="ic">👥</div><p>אין תלמידים — לחץ על "תלמידים" כדי להוסיף</p></div>';return}
   el.innerHTML='<div class="abox"><h3>'+fmtD(TODAY)+'</h3>'+students.map(s=>'<div class="ar"><span>'+s.name+(s.class_name?' <small style="color:var(--text3)">· '+s.class_name+'</small>':'')+'</span><div class="abtns"><button class="ab'+(todayAtt[s.id]==='present'?' sp':'')+'" onclick="setQ('+s.id+','present',this)">✓ נוכח</button><button class="ab'+(todayAtt[s.id]==='late'?' sl':'')+'" onclick="setQ('+s.id+','late',this)">⏰ איחור</button><button class="ab'+(todayAtt[s.id]==='absent'?' sa':'')+'" onclick="setQ('+s.id+','absent',this)">✗ נעדר</button></div></div>').join('')+'</div>';
 }
-function setQ(id,st,btn){todayAtt[id]=st;updBtns(btn,st)}
-function updBtns(btn,st){
-  btn.closest('.abtns').querySelectorAll('.ab').forEach(b=>{
-    b.className='ab';
-    if(b.textContent.includes('נוכח')&&st==='present')b.classList.add('sp');
-    if(b.textContent.includes('איחור')&&st==='late')b.classList.add('sl');
-    if(b.textContent.includes('נעדר')&&st==='absent')b.classList.add('sa');
-  });
-}
-async function saveQ(){await saveAttData(TODAY,todayAtt);loadDash()}
+function setQ(id,st,btn){todayAtt[id]=st;updB(btn,st)}
+function updB(btn,st){btn.closest('.abtns').querySelectorAll('.ab').forEach(b=>{b.className='ab';if(b.textContent.includes('נוכח')&&st==='present')b.classList.add('sp');if(b.textContent.includes('איחור')&&st==='late')b.classList.add('sl');if(b.textContent.includes('נעדר')&&st==='absent')b.classList.add('sa')})}
+async function saveQ(){await saveAD(TODAY,todayAtt);loadDash()}
 async function loadSt(){
   document.getElementById('stb').innerHTML='<tr><td colspan="5"><div class="ld">טוען...</div></td></tr>';
   const{data}=await SB.from('students').select('*').eq('active',true).order('name');
@@ -218,18 +189,17 @@ async function saveS(){
 }
 async function delS(id,name){if(!confirm('למחוק את '+name+'?'))return;await SB.from('students').update({active:false}).eq('id',id);toast('🗑️ הוסר');loadSt()}
 async function loadA(date){
-  const el=document.getElementById('al');
-  el.innerHTML='<div class="ld">טוען...</div>';
+  const el=document.getElementById('al');el.innerHTML='<div class="ld">טוען...</div>';
   if(!students.length){const{data}=await SB.from('students').select('*').eq('active',true).order('name');students=data||[]}
   const{data:a}=await SB.from('attendance').select('*').eq('date',date);
   curAtt={};(a||[]).forEach(x=>curAtt[x.student_id]=x.status);
   if(!students.length){el.innerHTML='<div class="empty"><div class="ic">👥</div><p>אין תלמידים</p></div>';return}
   el.innerHTML='<div class="abox"><h3>'+fmtD(date)+'</h3>'+students.map(s=>'<div class="ar"><span>'+s.name+(s.class_name?' <small style="color:var(--text3)">· '+s.class_name+'</small>':'')+'</span><div class="abtns"><button class="ab'+(curAtt[s.id]==='present'?' sp':'')+'" onclick="setA('+s.id+','present',this)">✓ נוכח</button><button class="ab'+(curAtt[s.id]==='late'?' sl':'')+'" onclick="setA('+s.id+','late',this)">⏰ איחור</button><button class="ab'+(curAtt[s.id]==='absent'?' sa':'')+'" onclick="setA('+s.id+','absent',this)">✗ נעדר</button></div></div>').join('')+'</div>';
 }
-function setA(id,st,btn){curAtt[id]=st;updBtns(btn,st)}
-async function saveA(){await saveAttData(document.getElementById('dp').value,curAtt)}
-async function saveAttData(date,map){
-  const u=Object.entries(map).map(([sid,status])=>({student_id:sid,date,status}));
+function setA(id,st,btn){curAtt[id]=st;updB(btn,st)}
+async function saveA(){await saveAD(document.getElementById('dp').value,curAtt)}
+async function saveAD(date,map){
+  const u=Object.entries(map).map(([sid,status])=>({student_id:parseInt(sid),date,status}));
   if(!u.length){toast('לא נבחרה נוכחות');return}
   const{error}=await SB.from('attendance').upsert(u,{onConflict:'student_id,date'});
   if(error){toast('שגיאה: '+error.message);return}
@@ -247,12 +217,7 @@ async function loadR(){
 }
 function cm(id){document.getElementById(id).classList.remove('on')}
 let tt;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2500)}
-window.onload=()=>{
-  const u=localStorage.getItem('sbu'),k=localStorage.getItem('sbk');
-  if(u)document.getElementById('su').value=u;
-  if(k)document.getElementById('sk').value=k;
-  if(u&&k)init();
-};
+window.onload=start;
 </script>
 </body>
 </html>
