@@ -199,6 +199,22 @@ document.getElementById('dp').value=TODAY;
 document.getElementById('rm').value=TODAY.substring(0,7);
 
 
+
+function hebrewDate(d){
+  d=d||new Date();
+  var wd=d.toLocaleDateString('he-IL',{weekday:'long'});
+  var hDate=new Intl.DateTimeFormat('he-u-ca-hebrew-nu-hebr',{day:'numeric',month:'long',year:'numeric'}).format(d);
+  return wd+', '+hDate;
+}
+function hebrewDateShort(d){
+  d=d||new Date();
+  return new Intl.DateTimeFormat('he-u-ca-hebrew-nu-hebr',{day:'numeric',month:'long',year:'numeric'}).format(d);
+}
+function hebrewMonth(d){
+  d=d||new Date();
+  return new Intl.DateTimeFormat('he-u-ca-hebrew-nu-hebr',{month:'long',year:'numeric'}).format(d);
+}
+
 function hebrewDate(d){
   d=d||new Date();
   var wd=d.toLocaleDateString("he-IL",{weekday:"long"});
