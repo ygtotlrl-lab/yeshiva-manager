@@ -190,7 +190,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 <script>
 var KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkY3NxYWphdmh4c2JzY2ducG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NTQwMjIsImV4cCI6MjA4OTIzMDAyMn0.hf_jjLyAZk3IS6IPF_skyEEsrG50AXvJqI790qdJdlo';
 var SB_URL='                                        ';
-var SB=supabase.createClient('https://hdcsqajavhxsbscgnpob.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkY3NxYWphdmh4c2JzY2ducG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5NzY0MzksImV4cCI6MjA1NzU1MjQzOX0.Ld_PrEWjFsS5dPXkEXIKnQdAfFk4VWFC7J4KOILZhD8');
+var SB=supabase.createClient('                                        ','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkY3NxYWphdmh4c2JzY2ducG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5NzY0MzksImV4cCI6MjA1NzU1MjQzOX0.Ld_PrEWjFsS5dPXkEXIKnQdAfFk4VWFC7J4KOILZhD8');
 var students=[],curAtt={};
 var TODAY=new Date().toISOString().split('T')[0];
 
@@ -201,40 +201,37 @@ document.getElementById('rm').value=TODAY.substring(0,7);
 
 
 
-function toGematria(n) {
-  var ones=['','א','ב','ג','ד','ה','ו','ז','ח','ט'];
-  var tens=['','י','כ','ל','מ','נ','ס','ע','פ','צ'];
-  var hundreds=['','ק','ר','ש','ת','תק','תר','תש','תת','תתק'];
-  if(n<=0) return '';
-  var s='';
-  if(n>=1000){s+=ones[Math.floor(n/1000)]+'׳';n=n%1000;}
-  if(n>=400){while(n>=400){s+='ת';n-=400;}}
-  if(n>=100){s+=hundreds[Math.floor(n/100)];n=n%100;}
-  if(n===15){s+='טו';n=0;}
-  else if(n===16){s+='טז';n=0;}
-  if(n>=10){s+=tens[Math.floor(n/10)];n=n%10;}
-  if(n>0){s+=ones[n];}
-  if(s.length>1) s=s.slice(0,-1)+'״'+s.slice(-1);
-  else s+='׳';
-  return s;
+function toGematria(n){
+  if(!n||n<=0)return '';
+  var L=[[400,'ת'],[300,'ש'],[200,'ר'],[100,'ק'],[90,'צ'],[80,'פ'],[70,'ע'],[60,'ס'],[50,'נ'],[40,'מ'],[30,'ל'],[20,'כ'],[10,'י'],[9,'ט'],[8,'ח'],[7,'ז'],[6,'ו'],[5,'ה'],[4,'ד'],[3,'ג'],[2,'ב'],[1,'א']];
+  var s='',r=n;
+  if(r>=1000){var t=Math.floor(r/1000);r=r%1000;for(var i=0;i<L.length;i++)while(t>=L[i][0]){s+=L[i][1];t-=L[i][0];}s+='׳';}
+  if(r===15)return s+'ט״ו';
+  if(r===16)return s+'ט״ז';
+  var p='';
+  for(var i=0;i<L.length;i++)while(r>=L[i][0]){p+=L[i][1];r-=L[i][0];}
+  return s+(p.length===1?p+'׳':p.slice(0,-1)+'״'+p.slice(-1));
 }
 function hebrewDate(d){
   d=d||new Date();
-  var wd=d.toLocaleDateString('he-IL',{weekday:'long'});
-  var parts=d.toLocaleDateString('he-IL-u-ca-hebrew',{day:'numeric',month:'long',year:'numeric'});
-  // parts like "1 בניסן 5786" -> convert numbers to gematria
-  parts=parts.replace(/\b(\d+)\b/g,function(m,num){return toGematria(parseInt(num));});
-  return wd+', '+parts;
+  var w=d.toLocaleDateString('he-IL',{weekday:'long'});
+  var dy=parseInt(new Intl.DateTimeFormat('he-IL-u-ca-hebrew',{day:'numeric'}).format(d));
+  var mo=new Intl.DateTimeFormat('he-IL-u-ca-hebrew',{month:'long'}).format(d);
+  var yr=parseInt(new Intl.DateTimeFormat('he-IL-u-ca-hebrew',{year:'numeric'}).format(d));
+  return w+', '+toGematria(dy)+' '+mo+' '+toGematria(yr);
 }
 function hebrewDateShort(d){
   d=d||new Date();
-  var parts=d.toLocaleDateString('he-IL-u-ca-hebrew',{day:'numeric',month:'long',year:'numeric'});
-  parts=parts.replace(/\b(\d+)\b/g,function(m,num){return toGematria(parseInt(num));});
-  return parts;
+  var dy=parseInt(new Intl.DateTimeFormat('he-IL-u-ca-hebrew',{day:'numeric'}).format(d));
+  var mo=new Intl.DateTimeFormat('he-IL-u-ca-hebrew',{month:'long'}).format(d);
+  var yr=parseInt(new Intl.DateTimeFormat('he-IL-u-ca-hebrew',{year:'numeric'}).format(d));
+  return toGematria(dy)+' '+mo+' '+toGematria(yr);
 }
 function hebrewMonth(d){
   d=d||new Date();
-  return d.toLocaleDateString('he-IL-u-ca-hebrew',{month:'long',year:'numeric'});
+  var mo=new Intl.DateTimeFormat('he-IL-u-ca-hebrew',{month:'long'}).format(d);
+  var yr=parseInt(new Intl.DateTimeFormat('he-IL-u-ca-hebrew',{year:'numeric'}).format(d));
+  return mo+' '+toGematria(yr);
 }
 
 function hebrewDate(d){
