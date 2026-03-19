@@ -201,37 +201,45 @@ document.getElementById('rm').value=TODAY.substring(0,7);
 
 
 
-function toGematria(n){
-  if(!n||n<=0)return '';
-  var L=[[400,'ת'],[300,'ש'],[200,'ר'],[100,'ק'],[90,'צ'],[80,'פ'],[70,'ע'],[60,'ס'],[50,'נ'],[40,'מ'],[30,'ל'],[20,'כ'],[10,'י'],[9,'ט'],[8,'ח'],[7,'ז'],[6,'ו'],[5,'ה'],[4,'ד'],[3,'ג'],[2,'ב'],[1,'א']];
-  var s='',r=n;
-  if(r>=1000){var t=Math.floor(r/1000);r=r%1000;for(var i=0;i<L.length;i++)while(t>=L[i][0]){s+=L[i][1];t-=L[i][0];}s+='׳';}
-  if(r===15)return s+'ט״ו';
-  if(r===16)return s+'ט״ז';
-  var p='';
-  for(var i=0;i<L.length;i++)while(r>=L[i][0]){p+=L[i][1];r-=L[i][0];}
-  return s+(p.length===1?p+'׳':p.slice(0,-1)+'״'+p.slice(-1));
+var DAYS_HEB = ["","א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ז׳","ח׳","ט׳","י׳","י״א","י״ב","י״ג","י״ד","ט״ו","ט״ז","י״ז","י״ח","י״ט","כ׳","כ״א","כ״ב","כ״ג","כ״ד","כ״ה","כ״ו","כ״ז","כ״ח","כ״ט","ל׳"];
+var MONTHS_HEB = ["תשרי","חשון","כסלו","טבת","שבט","אדר","ניסן","אייר","סיון","תמוז","אב","אלול"];
+function hebrewDate(jsDate) {
+  var y = jsDate.getFullYear(), m = jsDate.getMonth()+1, d = jsDate.getDate();
+  var td = new Date(y,m-1,d);
+  var starts = [
+    {jd: new Date(2024,9,3),  hy:5785, mlen:[30,29,30,29,30,29,30,30,29,30,29,30]},
+    {jd: new Date(2025,8,22), hy:5786, mlen:[30,30,30,29,30,29,30,30,29,30,29,30]},
+    {jd: new Date(2026,8,12), hy:5787, mlen:[30,29,30,29,30,29,30,30,29,30,29,30]},
+    {jd: new Date(2027,9,1),  hy:5788, mlen:[30,29,30,29,30,29,30,30,29,30,29,30]},
+  ];
+  var base = null;
+  for (var i = starts.length-1; i >= 0; i--) {
+    if (td >= starts[i].jd) { base = starts[i]; break; }
+  }
+  if (!base) return "";
+  var diff = Math.round((td - base.jd) / 86400000);
+  var cum = 0;
+  for (var mi = 0; mi < base.mlen.length; mi++) {
+    if (diff < cum + base.mlen[mi]) {
+      var day = diff - cum + 1;
+      var yearStr = {5785:"ה׳תשפ״ה", 5786:"ה׳תשפ״ו", 5787:"ה׳תשפ״ז", 5788:"ה׳תשפ״ח"}[base.hy] || ("ה׳" + base.hy);
+      return DAYS_HEB[day] + " " + MONTHS_HEB[mi] + " " + yearStr;
+    }
+    cum += base.mlen[mi];
+  }
+  return "";
 }
-function hebrewDate(d){
-  d=d||new Date();
-  var w=d.toLocaleDateString('he-IL',{weekday:'long'});
-  var dy=parseInt(new Intl.DateTimeFormat('he-IL-u-ca-hebrew',{day:'numeric'}).format(d));
-  var mo=new Intl.DateTimeFormat('he-IL-u-ca-hebrew',{month:'long'}).format(d);
-  var yr=parseInt(new Intl.DateTimeFormat('he-IL-u-ca-hebrew',{year:'numeric'}).format(d));
-  return w+', '+toGematria(dy)+' '+mo+' '+toGematria(yr);
+function hebrewDateShort(d) {
+  var full = hebrewDate(d || new Date());
+  // Remove weekday prefix (e.g. 'יום חמישי, ')
+  var comma = full.indexOf(', ');
+  return comma >= 0 ? full.substring(comma + 2) : full;
 }
-function hebrewDateShort(d){
-  d=d||new Date();
-  var dy=parseInt(new Intl.DateTimeFormat('he-IL-u-ca-hebrew',{day:'numeric'}).format(d));
-  var mo=new Intl.DateTimeFormat('he-IL-u-ca-hebrew',{month:'long'}).format(d);
-  var yr=parseInt(new Intl.DateTimeFormat('he-IL-u-ca-hebrew',{year:'numeric'}).format(d));
-  return toGematria(dy)+' '+mo+' '+toGematria(yr);
-}
-function hebrewMonth(d){
-  d=d||new Date();
-  var mo=new Intl.DateTimeFormat('he-IL-u-ca-hebrew',{month:'long'}).format(d);
-  var yr=parseInt(new Intl.DateTimeFormat('he-IL-u-ca-hebrew',{year:'numeric'}).format(d));
-  return mo+' '+toGematria(yr);
+function hebrewMonth(d) {
+  var short = hebrewDateShort(d || new Date());
+  // Return only month + year (last two tokens)
+  var parts = short.split(' ');
+  return parts.length >= 2 ? parts[parts.length-2] + ' ' + parts[parts.length-1] : short;
 }
 
 function hebrewDate(d){
