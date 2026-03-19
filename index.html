@@ -188,6 +188,12 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 <div class="mb" id="ms"><div class="md"><button class="mc" id="btn-cm">✕</button><div class="md-title"><span>👤</span><span id="mt">הוסף תלמיד</span></div><input type="hidden" id="sid"><label>שם מלא *</label><input type="text" id="sn" placeholder="ישראל ישראלי"><label>שיעור</label><input type="text" id="sc" placeholder="שיעור א'"><label>טלפון הורה</label><input type="tel" id="sp"><label>הערות</label><input type="text" id="snotes"><div class="ma"><button class="btn out" id="btn-cancel">ביטול</button><button class="btn" id="btn-save-st">💾 שמור</button></div></div></div>
 <div id="toast"></div>
 <script>
+window.DAYS_HEB=["","א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ז׳","ח׳","ט׳","י׳","י״א","י״ב","י״ג","י״ד","ט״ו","ט״ז","י״ז","י״ח","י״ט","כ׳","כ״א","כ״ב","כ״ג","כ״ד","כ״ה","כ״ו","כ״ז","כ״ח","כ״ט","ל׳"];
+window.MONTHS_HEB=["תשרי","חשון","כסלו","טבת","שבט","אדר","ניסן","אייר","סיון","תמוז","אב","אלול"];
+function hebrewDate(jsDate){jsDate=jsDate||new Date();var y=jsDate.getFullYear(),mo=jsDate.getMonth()+1,dy=jsDate.getDate();var td=new Date(y,mo-1,dy);var ST=[{jd:new Date(2024,9,3),hy:5785,ml:[30,29,30,29,30,29,30,30,29,30,29,30]},{jd:new Date(2025,8,22),hy:5786,ml:[30,30,30,29,30,29,30,30,29,30,29,30]},{jd:new Date(2026,8,11),hy:5787,ml:[30,29,30,29,30,30,30,29,30,30,29,30]},{jd:new Date(2027,9,2),hy:5788,ml:[30,29,30,29,30,29,30,30,29,30,30,30]}];var base=ST[0];for(var i=ST.length-1;i>=0;i--){if(td>=ST[i].jd){base=ST[i];break;}}var diff=Math.round((td-base.jd)/86400000),cum=0;for(var mi=0;mi<base.ml.length;mi++){if(diff<cum+base.ml[mi]){var d=diff-cum+1;var ymap={5785:"ה׳תשפ״ה",5786:"ה׳תשפ״ו",5787:"ה׳תשפ״ז",5788:"ה׳תשפ״ח"};var wdays=["אחד","שני","שלישי","רביעי","חמישי","ששי","שבת"];return "יום "+wdays[jsDate.getDay()]+", "+window.DAYS_HEB[d]+" "+window.MONTHS_HEB[mi]+" "+(ymap[base.hy]||base.hy);}cum+=base.ml[mi];}return "";}
+function hebrewDateShort(d){var s=hebrewDate(d||new Date());var c=s.indexOf(", ");return c>=0?s.substring(c+2):s;}
+function hebrewMonth(d){var s=hebrewDateShort(d||new Date());var p=s.split(" ");return p.length>=2?p[p.length-2]+" "+p[p.length-1]:s;}
+
 var KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkY3NxYWphdmh4c2JzY2ducG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NTQwMjIsImV4cCI6MjA4OTIzMDAyMn0.hf_jjLyAZk3IS6IPF_skyEEsrG50AXvJqI790qdJdlo';
 var SB_URL='                                        ';
 var SB=supabase.createClient('https://hdcsqajavhxsbscgnpob.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhkY3NxYWphdmh4c2JzY2ducG9iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5NzY0MzksImV4cCI6MjA1NzU1MjQzOX0.Ld_PrEWjFsS5dPXkEXIKnQdAfFk4VWFC7J4KOILZhD8');
@@ -201,37 +207,7 @@ document.getElementById('rm').value=TODAY.substring(0,7);
 
 
 
-window.DAYS_HEB=["","א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ז׳","ח׳","ט׳","י׳","י״א","י״ב","י״ג","י״ד","ט״ו","ט״ז","י״ז","י״ח","י״ט","כ׳","כ״א","כ״ב","כ״ג","כ״ד","כ״ה","כ״ו","כ״ז","כ״ח","כ״ט","ל׳"];
-window.MONTHS_HEB=["תשרי","חשון","כסלו","טבת","שבט","אדר","ניסן","אייר","סיון","תמוז","אב","אלול"];
-window.DAYS_HEB=["","א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ז׳","ח׳","ט׳","י׳","י״א","י״ב","י״ג","י״ד","ט״ו","ט״ז","י״ז","י״ח","י״ט","כ׳","כ״א","כ״ב","כ״ג","כ״ד","כ״ה","כ״ו","כ״ז","כ״ח","כ״ט","ל׳"];
-window.MONTHS_HEB=["תשרי","חשון","כסלו","טבת","שבט","אדר","ניסן","אייר","סיון","תמוז","אב","אלול"];
-function hebrewDate(jsDate){
-jsDate=jsDate||new Date();
-var y=jsDate.getFullYear(),mo=jsDate.getMonth()+1,day=jsDate.getDate();
-var td=new Date(y,mo-1,day);
-var ST=[
-{jd:new Date(2024,9,3),hy:5785,ml:[30,29,30,29,30,29,30,30,29,30,29,30]},
-{jd:new Date(2025,8,22),hy:5786,ml:[30,30,30,29,30,29,30,30,29,30,29,30]},
-{jd:new Date(2026,8,11),hy:5787,ml:[30,29,30,29,30,30,30,29,30,30,29,30]},
-{jd:new Date(2027,9,2),hy:5788,ml:[30,29,30,29,30,29,30,30,29,30,30,30]}
-];
-var base=ST[0];
-for(var i=ST.length-1;i>=0;i--){if(td>=ST[i].jd){base=ST[i];break;}}
-var diff=Math.round((td-base.jd)/86400000),cum=0;
-for(var mi=0;mi<base.ml.length;mi++){
-if(diff<cum+base.ml[mi]){
-var d=diff-cum+1;
-var ymap={5785:"ה׳תשפ״ה",5786:"ה׳תשפ״ו",5787:"ה׳תשפ״ז",5788:"ה׳תשפ״ח"};
-var wdays=["אחד","שני","שלישי","רביעי","חמישי","ששי","שבת"];
-var wd="יום "+wdays[jsDate.getDay()];
-return wd+", "+window.DAYS_HEB[d]+" "+window.MONTHS_HEB[mi]+" "+(ymap[base.hy]||base.hy);
-}
-cum+=base.ml[mi];
-}
-return "";
-}
-function hebrewDateShort(d){var s=hebrewDate(d||new Date());var c=s.indexOf(", ");return c>=0?s.substring(c+2):s;}
-function hebrewMonth(d){var s=hebrewDateShort(d||new Date());var p=s.split(" ");return p.length>=2?p[p.length-2]+" "+p[p.length-1]:s;}
+
 function hebrewDateFull(d){d=d||new Date();var days=["אחד","שני","שלישי","רביעי","חמישי","ששי","שבת"];var w="יום "+days[d.getDay()];return w+", "+hebrewDate(d);}
 
 
