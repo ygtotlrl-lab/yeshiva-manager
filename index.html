@@ -200,6 +200,43 @@ document.getElementById('rm').value=TODAY.substring(0,7);
 
 
 
+
+function toGematria(n) {
+  var ones=['','א','ב','ג','ד','ה','ו','ז','ח','ט'];
+  var tens=['','י','כ','ל','מ','נ','ס','ע','פ','צ'];
+  var hundreds=['','ק','ר','ש','ת','תק','תר','תש','תת','תתק'];
+  if(n<=0) return '';
+  var s='';
+  if(n>=1000){s+=ones[Math.floor(n/1000)]+'׳';n=n%1000;}
+  if(n>=400){while(n>=400){s+='ת';n-=400;}}
+  if(n>=100){s+=hundreds[Math.floor(n/100)];n=n%100;}
+  if(n===15){s+='טו';n=0;}
+  else if(n===16){s+='טז';n=0;}
+  if(n>=10){s+=tens[Math.floor(n/10)];n=n%10;}
+  if(n>0){s+=ones[n];}
+  if(s.length>1) s=s.slice(0,-1)+'״'+s.slice(-1);
+  else s+='׳';
+  return s;
+}
+function hebrewDate(d){
+  d=d||new Date();
+  var wd=d.toLocaleDateString('he-IL',{weekday:'long'});
+  var parts=d.toLocaleDateString('he-IL-u-ca-hebrew',{day:'numeric',month:'long',year:'numeric'});
+  // parts like "1 בניסן 5786" -> convert numbers to gematria
+  parts=parts.replace(/\b(\d+)\b/g,function(m,num){return toGematria(parseInt(num));});
+  return wd+', '+parts;
+}
+function hebrewDateShort(d){
+  d=d||new Date();
+  var parts=d.toLocaleDateString('he-IL-u-ca-hebrew',{day:'numeric',month:'long',year:'numeric'});
+  parts=parts.replace(/\b(\d+)\b/g,function(m,num){return toGematria(parseInt(num));});
+  return parts;
+}
+function hebrewMonth(d){
+  d=d||new Date();
+  return d.toLocaleDateString('he-IL-u-ca-hebrew',{month:'long',year:'numeric'});
+}
+
 function hebrewDate(d){
   d=d||new Date();
   var wd=d.toLocaleDateString('he-IL',{weekday:'long'});
