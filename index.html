@@ -194,9 +194,25 @@ var SB=supabase.createClient('https://hdcsqajavhxsbscgnpob.supabase.co','eyJhbGc
 var students=[],curAtt={};
 var TODAY=new Date().toISOString().split('T')[0];
 
-document.getElementById('hdate').textContent=new Date().toLocaleDateString('he-IL',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+document.getElementById('hdate').textContent=hebrewDate();
 document.getElementById('dp').value=TODAY;
 document.getElementById('rm').value=TODAY.substring(0,7);
+
+
+function hebrewDate(d){
+  d=d||new Date();
+  var wd=d.toLocaleDateString("he-IL",{weekday:"long"});
+  var hd=d.toLocaleDateString('he-IL-u-ca-hebrew',{day:'numeric',month:'long',year:'numeric'});
+  return wd+', '+hd;
+}
+function hebrewDateShort(d){
+  d=d||new Date();
+  return d.toLocaleDateString('he-IL-u-ca-hebrew',{day:'numeric',month:'long',year:'numeric'});
+}
+function hebrewMonth(d){
+  d=d||new Date();
+  return d.toLocaleDateString('he-IL-u-ca-hebrew',{month:'long',year:'numeric'});
+}
 
 function showPg(n){
   document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on')});
@@ -240,7 +256,7 @@ function renderSt(list){
   if(!list.length){tb.innerHTML='<tr><td colspan="5"><div class="empty">אין תלמידים</div></td></tr>';return}
   var h='';
   list.forEach(function(s){
-    h+='<tr><td><strong>'+s.name+'</strong></td><td>'+(s.class_name||'-')+'</td><td style="direction:ltr">'+(s.parent_phone||'-')+'</td><td>'+(s.created_at?new Date(s.created_at).toLocaleDateString('he-IL'):'-')+'</td><td style="display:flex;gap:6px">';
+    h+='<tr><td><strong>'+s.name+'</strong></td><td>'+(s.class_name||'-')+'</td><td style="direction:ltr">'+(s.parent_phone||'-')+'</td><td>'+(s.created_at?hebrewDateShort(new Date(s.created_at)):'-')+'</td><td style="display:flex;gap:6px">';
     h+='<button class="btn out" style="padding:5px 10px;font-size:.8rem" data-edit="'+s.id+'">✏️</button>';
     h+='<button class="btn" style="padding:5px 10px;font-size:.8rem;background:#c0392b;border-color:#c0392b" data-del="'+s.id+'" data-name="'+s.name+'">🗑️</button>';
     h+='</td></tr>';
@@ -268,7 +284,7 @@ function loadA(date){
 function renderA(date){
   var el=document.getElementById('al');
   if(!students.length){el.innerHTML='<div class="empty">אין תלמידים</div>';return}
-  var h='<div class="abox"><div class="abox-h">'+new Date(date+'T12:00:00').toLocaleDateString('he-IL',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+'</div>';
+  var h='<div class="abox"><div class="abox-h">'+hebrewDateShort(new Date(date+'T12:00:00'))+'</div>';
   students.forEach(function(s){
     h+='<div class="ar"><span>'+s.name+(s.class_name?'<small style="color:var(--text3);font-size:.78rem;margin-right:6px"> '+s.class_name+'</small>':'')+'</span><div class="abtns">';
     h+='<button class="ab'+(curAtt[s.id]==='present'?' sp':'')+'" data-id="'+s.id+'" data-st="present">✓ נוכח</button>';
