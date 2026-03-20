@@ -595,75 +595,89 @@ function getStudentStatus(sid){
 }
 
 function renderStudents(){
-  if(document.getElementById('pg-students')?.style.display==='none') return;
-  const students=getStudents();
-  const search=(document.getElementById('search-st')?.value||'').toLowerCase();
-  const today=todayKey();
-  const attend=getAttendance();
-  const dayA=attend[today]||{};
+  var students=getStudents();
+  var search=(document.getElementById('search-st')?document.getElementById('search-st').value:'').toLowerCase();
+  var today=todayKey();
+  var attend=getAttendance();
+  var dayA=attend[today]||{};
   
-  let filtered=students.filter(s=>{
-    if(currentFilter!=='all' && s.cls!==currentFilter) return false;
-    if(search && !s.name.includes(search)) return false;
+  var filtered=students.filter(function(s){
+    if(currentFilter!=='all'&&s.cls!==currentFilter)return false;
+    if(search&&s.name.indexOf(search)<0&&search.length>0)return false;
     return true;
   });
   
-  // Count summary
-  let present=0,absent=0,approved=0;
-  students.forEach(s=>{
-    const st=getStudentStatus(s.id);
-    if(st.status==='present') present++;
-    else if(st.status==='approved') approved++;
-    else if(st.status==='absent') absent++;
+  var present=0,absent=0,approved=0;
+  students.forEach(function(s){
+    var st=getStudentStatus(s.id);
+    if(st.status==='present')present++;
+    else if(st.status==='approved')approved++;
+    else if(st.status==='absent')absent++;
   });
   
-  const sumEl=document.getElementById('st-summary');
-  if(sumEl) sumEl.innerHTML=
-    '<span style="color:#38a169">✅ נוכחים: '+present+'</span>'+
-    '<span style="color:#ed8936">📋 באישור: '+approved+'</span>'+
-    '<span style="color:#e53e3e">❌ נעדרים: '+absent+'</span>'+
+  var sumEl=document.getElementById('st-summary');
+  if(sumEl)sumEl.innerHTML=
+    '<span style="color:#38a169">&#x2705; נוכחים: '+present+'</span>&nbsp;&nbsp;'+
+    '<span style="color:#ed8936">&#x1F4CB; באישור: '+approved+'</span>&nbsp;&nbsp;'+
+    '<span style="color:#e53e3e">&#x274C; נעדרים: '+absent+'</span>&nbsp;&nbsp;'+
     '<span style="color:#666">סה"כ: '+students.length+'</span>';
   
-  const tbody=document.getElementById('students-tbody');
-  if(!tbody) return;
+  // Update class tab labels
+  document.getElementById('ct-all').textContent='הכל ('+students.length+')';
+  document.getElementById('ct-a').textContent='שיעור א\'+(students.filter(function(s){return s.cls==='א';}).length)+')';
+  document.getElementById('ct-b').textContent='שיעור ב\'+(students.filter(function(s){return s.cls==='ב';}).length)+')';
+  document.getElementById('ct-c').textContent='שיעור ג\'+(students.filter(function(s){return s.cls==='ג';}).length)+')';
   
-  tbody.innerHTML=filtered.map((s,i)=>{
-    const st=getStudentStatus(s.id);
-    const rec=dayA[s.id]||{};
-    const appr=getApprovals()[s.id];
-    const apprText=appr&&appr.active?(appr.reason+(appr.fromHeb?' ('+appr.fromHeb+'-'+appr.toHeb+')':'')):'';
-    const rowBg=i%2===0?'#fff':'#f9fafb';
-    const statusBg=st.status==='present'?'#f0fff4':st.status==='approved'?'#fffaf0':st.status==='absent'?'#fff5f5':rowBg;
-    return '<tr style="background:'+statusBg+';border-bottom:1px solid #eee">'+
-      '<td style="padding:8px;text-align:right;font-weight:bold;color:#666">'+s.id+'</td>'+
-      '<td style="padding:8px;text-align:right;font-weight:500">'+s.name+'</td>'+
-      '<td style="padding:8px;text-align:center"><span style="background:#e8eaf6;color:#3f51b5;padding:2px 8px;border-radius:12px;font-size:0.85em">שיעור '+s.cls+''</span></td>'+
-      '<td style="padding:8px;text-align:center">'+
-        '<button onclick="togglePresent('+s.id+',true)" style="background:'+(st.status==='present'?'#38a169':'#eee')+';color:'+(st.status==='present'?'white':'#333')+';border:none;padding:4px 10px;border-radius:6px;cursor:pointer;margin:2px" title="נוכח">✅</button>'+
-        '<button onclick="togglePresent('+s.id+',false)" style="background:'+(st.status==='absent'?'#e53e3e':'#eee')+';color:'+(st.status==='absent'?'white':'#333')+';border:none;padding:4px 10px;border-radius:6px;cursor:pointer;margin:2px" title="נעדר">❌</button>'+
-      '</td>'+
-      '<td style="padding:8px;text-align:center"><span style="color:'+st.color+';font-weight:600;font-size:0.85em">'+st.label+'</span></td>'+
-      '<td style="padding:8px;text-align:right;font-size:0.8em;color:#666;max-width:140px">'+
-        (apprText||'<button onclick="openApproval('+s.id+')" style="background:#ebf8ff;color:#2b6cb0;border:1px solid #bee3f8;padding:3px 8px;border-radius:6px;cursor:pointer;font-size:0.85em">📋 הוסף אישור</button>')+
-      '</td>'+
-      '<td style="padding:8px;text-align:center;font-size:0.82em;color:#555">'+(rec.entryTime||'—')+'</td>'+
-      '<td style="padding:8px;text-align:center;font-size:0.82em;color:#555">'+(rec.exitTime||'—')+'</td>'+
-      '<td style="padding:8px;text-align:center">'+
-        '<button onclick="editStudent('+s.id+')" style="background:none;border:none;cursor:pointer;font-size:1.1em" title="עריכה">✏️</button>'+
-        '<button onclick="deleteStudent('+s.id+')" style="background:none;border:none;cursor:pointer;font-size:1.1em" title="מחיקה">🗑️</button>'+
-        '<button onclick="recordTime('+s.id+')" style="background:none;border:none;cursor:pointer;font-size:1.1em" title="רשום זמן">⏱️</button>'+
-      '</td>'+
-    '</tr>';
-  }).join('');
+  var tbody=document.getElementById('students-tbody');
+  if(!tbody)return;
   
-  // Update class tab counts
-  const cls=getStudents();
-  document.getElementById('ct-all').textContent='הכל ('+cls.length+')';
-  document.getElementById('ct-a').textContent='שיעור א' ('+cls.filter(s=>s.cls==='א').length+')';
-  document.getElementById('ct-b').textContent='שיעור ב' ('+cls.filter(s=>s.cls==='ב').length+')';
-  document.getElementById('ct-c').textContent='שיעור ג' ('+cls.filter(s=>s.cls==='ג').length+')';
+  var html='';
+  filtered.forEach(function(s,i){
+    var st=getStudentStatus(s.id);
+    var rec=dayA[s.id]||{};
+    var appr=getApprovals()[s.id];
+    var apprText='';
+    if(appr&&appr.active){
+      apprText=appr.reason;
+      if(appr.fromHeb)apprText+=' ('+appr.fromHeb+'-'+(appr.toHeb||'')+')';
+    }
+    var bg=i%2===0?'#fff':'#f9fafb';
+    if(st.status==='present')bg='#f0fff4';
+    else if(st.status==='approved')bg='#fffaf0';
+    else if(st.status==='absent')bg='#fff5f5';
+    
+    var pressBg=st.status==='present'?'#38a169':'#eee';
+    var pressCol=st.status==='present'?'white':'#333';
+    var absBg=st.status==='absent'?'#e53e3e':'#eee';
+    var absCol=st.status==='absent'?'white':'#333';
+    
+    html+='<tr style="background:'+bg+';border-bottom:1px solid #eee">';
+    html+='<td style="padding:8px;text-align:right;font-weight:bold;color:#999;font-size:0.85em">'+s.id+'</td>';
+    html+='<td style="padding:8px;text-align:right;font-weight:500">'+s.name+'</td>';
+    html+='<td style="padding:8px;text-align:center"><span style="background:#e8eaf6;color:#3f51b5;padding:2px 8px;border-radius:12px;font-size:0.82em">שיעור '+s.cls+''</span></td>';
+    html+='<td style="padding:8px;text-align:center">';
+    html+='<button onclick="togglePresent('+s.id+',true)" style="background:'+pressBg+';color:'+pressCol+';border:none;padding:4px 10px;border-radius:6px;cursor:pointer;margin:1px;font-size:0.9em">✅</button>';
+    html+='<button onclick="togglePresent('+s.id+',false)" style="background:'+absBg+';color:'+absCol+';border:none;padding:4px 10px;border-radius:6px;cursor:pointer;margin:1px;font-size:0.9em">❌</button>';
+    html+='</td>';
+    html+='<td style="padding:8px;text-align:center"><span style="color:'+st.color+';font-weight:600;font-size:0.85em">'+st.label+'</span></td>';
+    html+='<td style="padding:8px;text-align:right;font-size:0.8em;color:#555;max-width:150px">';
+    if(apprText){
+      html+=apprText+'<button onclick="clearApproval('+s.id+')" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:0.8em;margin-right:4px">×</button>';
+    } else {
+      html+='<button onclick="openApproval('+s.id+')" style="background:#ebf8ff;color:#2b6cb0;border:1px solid #bee3f8;padding:3px 8px;border-radius:6px;cursor:pointer;font-size:0.82em">אישור</button>';
+    }
+    html+='</td>';
+    html+='<td style="padding:8px;text-align:center;font-size:0.82em;color:#555">'+(rec.entryTime||'&#8212;')+'</td>';
+    html+='<td style="padding:8px;text-align:center;font-size:0.82em;color:#555">'+(rec.exitTime||'&#8212;')+'</td>';
+    html+='<td style="padding:8px;text-align:center">';
+    html+='<button onclick="editStudent('+s.id+')" style="background:none;border:none;cursor:pointer;font-size:1em" title="עריכה">✏️</button>';
+    html+='<button onclick="deleteStudent('+s.id+')" style="background:none;border:none;cursor:pointer;font-size:1em" title="מחיקה">🗑️</button>';
+    html+='<button onclick="recordTime('+s.id+')" style="background:none;border:none;cursor:pointer;font-size:1em" title="רשום זמן">⏱️</button>';
+    html+='</td>';
+    html+='</tr>';
+  });
+  tbody.innerHTML=html;
 }
-
 function togglePresent(sid,present){
   if(checkLoginNeeded()) return;
   const today=todayKey();
@@ -799,6 +813,13 @@ function saveApproval(){
   renderStudents();
 }
 
+
+function clearApproval(sid){
+  if(checkLoginNeeded())return;
+  var appr=getApprovals();
+  if(appr[sid]){appr[sid].active=false;saveApprovals(appr);}
+  renderStudents();
+}
 function closeApproval(){document.getElementById('approval-modal').style.display='none';}
 
 function openReasonsEditor(){
