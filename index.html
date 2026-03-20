@@ -624,9 +624,9 @@ function renderStudents(){
   
   // Update class tab labels
   document.getElementById('ct-all').textContent='הכל ('+students.length+')';
-  document.getElementById('ct-a').textContent='שיעור א\'+(students.filter(function(s){return s.cls==='א';}).length)+')';
-  document.getElementById('ct-b').textContent='שיעור ב\'+(students.filter(function(s){return s.cls==='ב';}).length)+')';
-  document.getElementById('ct-c').textContent='שיעור ג\'+(students.filter(function(s){return s.cls==='ג';}).length)+')';
+  document.getElementById('ct-a').textContent='שיעור א' ('+students.filter(function(s){return s.cls===String.fromCharCode(1488);}).length+')';}).length)+')';
+  document.getElementById('ct-b').textContent='שיעור ב' ('+students.filter(function(s){return s.cls===String.fromCharCode(1489);}).length+')';}).length)+')';
+  document.getElementById('ct-c').textContent='שיעור ג' ('+students.filter(function(s){return s.cls===String.fromCharCode(1490);}).length+')';}).length)+')';
   
   var tbody=document.getElementById('students-tbody');
   if(!tbody)return;
@@ -782,7 +782,7 @@ function openApproval(sid){
   sel.innerHTML=reasons.map(r=>'<option>'+r+'</option>').join('');
   // Add edit reasons button
   document.getElementById('other-text-wrap').style.display='none';
-  document.getElementById('appr-from-heb').value=hebrewDateShort();
+  try{document.getElementById('appr-from-heb').value=hebrewDateShort();}catch(e){}
   document.getElementById('appr-to-heb').value='';
   document.getElementById('appr-from-time').value='';
   document.getElementById('appr-to-time').value='';
