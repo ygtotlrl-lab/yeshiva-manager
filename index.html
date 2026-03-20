@@ -198,9 +198,9 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 <!-- Filter Tabs -->
 <div class="class-tabs" style="display:flex;gap:8px;margin:12px 0">
 <button class="btn sm on" id="ct-all" onclick="filterClass('all')">הכל (75)</button>
-<button class="btn sm out" id="ct-a" onclick="filterClass('א')">שיעור א'</button>
-<button class="btn sm out" id="ct-b" onclick="filterClass('ב')">שיעור ב'</button>
-<button class="btn sm out" id="ct-c" onclick="filterClass('ג')">שיעור ג'</button>
+<button class="btn sm out" id="ct-a" onclick="filterClass('a')">שיעור א'</button>
+<button class="btn sm out" id="ct-b" onclick="filterClass('b')">שיעור ב'</button>
+<button class="btn sm out" id="ct-g" onclick="filterClass('g')">שיעור ג'</button>
 </div>
 
 <!-- Search -->
@@ -480,63 +480,66 @@ var tt;function toast(m){var t=document.getElementById('toast');t.textContent=m;
 loadDash();
 
 // ============ STUDENTS MODULE ============
-const ADMIN_PASS='yeshiva2024';
-let isLoggedIn=localStorage.getItem('ys_admin')==='1';
-let currentFilter='all';
-let confirmCallback=null;
-let editingStudentId=null;
-let currentApprovalId=null;
+var ADMIN_PASS='yeshiva2024';
+var isLoggedIn=localStorage.getItem('ys_admin')==='1';
+var currentFilter='all';
+var confirmCallback=null;
+var editingStudentId=null;
+var currentApprovalId=null;
+var H=String.fromCharCode; // shortcut for Hebrew chars
 
-const DEFAULT_STUDENTS=[
-  {id:1,name:"אוחנה יוסף",cls:"א"},{id:2,name:"אוחנה דוד",cls:"ג"},
-  {id:3,name:"אזולאי אברהם",cls:"א"},{id:4,name:"אזולאי דוד",cls:"א"},
-  {id:5,name:"אזולאי יעקב",cls:"ג"},{id:6,name:"אהרונוב שניאור",cls:"ג"},
-  {id:7,name:"אטיאס שלמה",cls:"א"},{id:8,name:"אלחרר שמואל",cls:"ב"},
-  {id:9,name:"אבוטבול אברהם",cls:"ב"},{id:10,name:"אדרי יוסף",cls:"ב"},
-  {id:11,name:"בוכריס שלמה",cls:"ג"},{id:12,name:"בוחניק פיליפ לוי",cls:"ב"},
-  {id:13,name:"ביטון מנחם",cls:"א"},{id:14,name:"בן דוד שמואל",cls:"ב"},
-  {id:15,name:"בנימיני ברוך",cls:"ב"},{id:16,name:"ברוך שמעון",cls:"א"},
-  {id:17,name:"ברוך אריה",cls:"ג"},{id:18,name:"גבאי יצחק",cls:"א"},
-  {id:19,name:"גבריאל מנחם",cls:"ג"},{id:20,name:"גולדברג מנחם",cls:"ב"},
-  {id:21,name:"דהן משה",cls:"א"},{id:22,name:"דהן אברהם",cls:"ג"},
-  {id:23,name:"דוברייצר אורי",cls:"ב"},{id:24,name:"דוקטורוביץ מנחם מענדל",cls:"א"},
-  {id:25,name:"דין שניאור זלמן",cls:"א"},{id:26,name:"הלוי נחמן",cls:"ב"},
-  {id:27,name:"הרמתי מנחם מענדל",cls:"א"},{id:28,name:"הרצוג שמואל",cls:"ג"},
-  {id:29,name:"ויינשטיין שניאור",cls:"ב"},{id:30,name:"ויסמן אהרון",cls:"א"},
-  {id:31,name:"ויסמן מנחם",cls:"ג"},{id:32,name:"זוסמן לוי יצחק",cls:"א"},
-  {id:33,name:"זוסמן שניאור זלמן",cls:"ג"},{id:34,name:"זילבר יעקב",cls:"ב"},
-  {id:35,name:"חדד נחמן",cls:"א"},{id:36,name:"חדד שלמה",cls:"ג"},
-  {id:37,name:"חסין אריה",cls:"ב"},{id:38,name:"טל אליהו",cls:"א"},
-  {id:39,name:"טל שמואל",cls:"ג"},{id:40,name:"טננבאום שמואל",cls:"ב"},
-  {id:41,name:"יוסף חיים",cls:"א"},{id:42,name:"יוסף מנחם",cls:"ג"},
-  {id:43,name:"יפרח שלמה",cls:"ב"},{id:44,name:"כהן אריה לייב",cls:"ג"},
-  {id:45,name:"כהן בנימין",cls:"א"},{id:46,name:"כהן בנימין ברוך",cls:"ב"},
-  {id:47,name:"כהן יוסף שמואל",cls:"א"},{id:48,name:"כהן יוסף שמואל צבי",cls:"ב"},
-  {id:49,name:"כהן מנחם",cls:"א"},{id:50,name:"לבקוביץ נחמן",cls:"א"},
-  {id:51,name:"לוי אריה",cls:"ב"},{id:52,name:"לוי נחמן",cls:"ג"},
-  {id:53,name:"לוי שניאור זלמן",cls:"ב"},{id:54,name:"לוין יהודה",cls:"א"},
-  {id:55,name:"מוזס שלמה",cls:"א"},{id:56,name:"מוזס אברהם",cls:"ג"},
-  {id:57,name:"מושקוביץ מנחם",cls:"ב"},{id:58,name:"מושקוביץ שניאור",cls:"ג"},
-  {id:59,name:"מחפוז מנחם מענדל",cls:"א"},{id:60,name:"מחפוז נחמן",cls:"ב"},
-  {id:61,name:"מזרחי יונתן יאיר",cls:"א"},{id:62,name:"מזרחי איתן אהרון",cls:"א"},
-  {id:63,name:"מזרחי שלמה",cls:"ג"},{id:64,name:"נחמיאס יוסף",cls:"ג"},
-  {id:65,name:"נעמת יוסף יצחק",cls:"ב"},{id:66,name:"סבג מנחם",cls:"ג"},
-  {id:67,name:"סגל מנחם מענדל",cls:"ב"},{id:68,name:"סלמה יוסף יצחק",cls:"ב"},
-  {id:69,name:"עוזיאל אריה",cls:"ג"},{id:70,name:"פבזנר שמואל",cls:"ב"},
-  {id:71,name:"פרידמן שמואל",cls:"ג"},{id:72,name:"צדוק יוסף",cls:"ג"},
-  {id:73,name:"קוהן מנחם מענדל",cls:"ג"},{id:74,name:"שלו רז",cls:"ב"},
-  {id:75,name:"שלו רז",cls:"ג"}
+var DEFAULT_STUDENTS=[
+  {id:1,name:H(1488,1493,1495,1504,1492,32,1497,1493,1505,1507),cls:'a'},{id:2,name:H(1488,1493,1495,1504,1492,32,1491,1493,1491),cls:'g'},
+  {id:3,name:H(1488,1494,1493,1500,1488,1497,32,1488,1489,1512,1492,1501),cls:'a'},{id:4,name:H(1488,1494,1493,1500,1488,1497,32,1491,1493,1491),cls:'a'},
+  {id:5,name:H(1488,1494,1493,1500,1488,1497,32,1497,1506,1511,1489),cls:'g'},{id:6,name:H(1488,1492,1512,1493,1504,1493,1489,32,1513,1504,1497,1488,1493,1512),cls:'g'},
+  {id:7,name:H(1488,1496,1497,1488,1505,32,1513,1500,1502,1492),cls:'a'},{id:8,name:H(1488,1500,1495,1512,1512,32,1513,1502,1493,1488,1500),cls:'b'},
+  {id:9,name:H(1488,1489,1493,1496,1489,1493,1500,32,1488,1489,1512,1492,1501),cls:'b'},{id:10,name:H(1488,1491,1512,1497,32,1497,1493,1505,1507),cls:'b'},
+  {id:11,name:H(1489,1493,1499,1512,1497,1505,32,1513,1500,1502,1492),cls:'g'},{id:12,name:H(1489,1493,1495,1504,1497,1511,32,1508,1497,1500,1497,1508),cls:'b'},
+  {id:13,name:H(1489,1497,1496,1493,1503,32,1502,1504,1495,1501),cls:'a'},{id:14,name:H(1489,1503,32,1491,1493,1491,32,1513,1502,1493,1488,1500),cls:'b'},
+  {id:15,name:H(1489,1504,1497,1502,1497,1504,1497,32,1489,1512,1493,1498),cls:'b'},{id:16,name:H(1489,1512,1493,1498,32,1513,1502,1506,1493,1503),cls:'a'},
+  {id:17,name:H(1489,1512,1493,1498,32,1488,1512,1497,1492),cls:'g'},{id:18,name:H(1490,1489,1488,1497,32,1497,1510,1495,1511),cls:'a'},
+  {id:19,name:H(1490,1489,1512,1497,1488,1500,32,1502,1504,1495,1501),cls:'g'},{id:20,name:H(1490,1493,1500,1491,1489,1512,1490,32,1502,1504,1495,1501),cls:'b'},
+  {id:21,name:H(1491,1492,1503,32,1502,1513,1492),cls:'a'},{id:22,name:H(1491,1492,1503,32,1488,1489,1512,1492,1501),cls:'g'},
+  {id:23,name:H(1491,1493,1489,1512,1497,1497,1510,1512,32,1488,1493,1512,1497),cls:'b'},{id:24,name:H(1491,1493,1511,1496,1493,1512,1493,1489,1497,1509,32,1502,1504,1495,1501,32,1502,1506,1504,1491,1500),cls:'a'},
+  {id:25,name:H(1491,1497,1503,32,1513,1504,1497,1488,1493,1512,32,1494,1500,1502,1503),cls:'a'},{id:26,name:H(1492,1500,1493,1497,32,1504,1495,1502,1503),cls:'b'},
+  {id:27,name:H(1492,1512,1502,1514,1497,32,1502,1504,1495,1501,32,1502,1506,1504,1491,1500),cls:'a'},{id:28,name:H(1492,1512,1510,1493,1490,32,1513,1502,1493,1488,1500),cls:'g'},
+  {id:29,name:H(1493,1497,1497,1504,1513,1496,1497,1497,1503,32,1513,1504,1497,1488,1493,1512),cls:'b'},{id:30,name:H(1493,1497,1505,1502,1503,32,1488,1492,1512,1493,1503),cls:'a'},
+  {id:31,name:H(1493,1497,1505,1502,1503,32,1502,1504,1495,1501),cls:'g'},{id:32,name:H(1494,1493,1505,1502,1503,32,1500,1493,1497,32,1497,1510,1495,1511),cls:'a'},
+  {id:33,name:H(1494,1493,1505,1502,1503,32,1513,1504,1497,1488,1493,1512,32,1494,1500,1502,1503),cls:'g'},{id:34,name:H(1494,1497,1500,1489,1512,32,1497,1506,1511,1489),cls:'b'},
+  {id:35,name:H(1495,1491,1491,32,1504,1495,1502,1503),cls:'a'},{id:36,name:H(1495,1491,1491,32,1513,1500,1502,1492),cls:'g'},
+  {id:37,name:H(1495,1505,1497,1503,32,1488,1512,1497,1492),cls:'b'},{id:38,name:H(1496,1500,32,1488,1500,1497,1492,1493),cls:'a'},
+  {id:39,name:H(1496,1500,32,1513,1502,1493,1488,1500),cls:'g'},{id:40,name:H(1496,1504,1504,1489,1488,1493,1501,32,1513,1502,1493,1488,1500),cls:'b'},
+  {id:41,name:H(1497,1493,1505,1507,32,1495,1497,1497,1501),cls:'a'},{id:42,name:H(1497,1493,1505,1507,32,1502,1504,1495,1501),cls:'g'},
+  {id:43,name:H(1497,1508,1512,1495,32,1513,1500,1502,1492),cls:'b'},{id:44,name:H(1499,1492,1503,32,1488,1512,1497,1492,32,1500,1497,1497,1489),cls:'g'},
+  {id:45,name:H(1499,1492,1503,32,1489,1504,1497,1502,1497,1503),cls:'a'},{id:46,name:H(1499,1492,1503,32,1489,1504,1497,1502,1497,1503,32,1489,1512,1493,1498),cls:'b'},
+  {id:47,name:H(1499,1492,1503,32,1497,1493,1505,1507,32,1513,1502,1493,1488,1500),cls:'a'},{id:48,name:H(1499,1492,1503,32,1497,1493,1505,1507,32,1513,1502,1493,1488,1500,32,1510,1489,1497),cls:'b'},
+  {id:49,name:H(1499,1492,1503,32,1502,1504,1495,1501),cls:'a'},{id:50,name:H(1500,1489,1511,1493,1489,1497,1509,32,1504,1495,1502,1503),cls:'a'},
+  {id:51,name:H(1500,1493,1497,32,1488,1512,1497,1492),cls:'b'},{id:52,name:H(1500,1493,1497,32,1504,1495,1502,1503),cls:'g'},
+  {id:53,name:H(1500,1493,1497,32,1513,1504,1497,1488,1493,1512,32,1494,1500,1502,1503),cls:'b'},{id:54,name:H(1500,1493,1497,1503,32,1497,1492,1493,1491,1492),cls:'a'},
+  {id:55,name:H(1502,1493,1494,1505,32,1513,1500,1502,1492),cls:'a'},{id:56,name:H(1502,1493,1494,1505,32,1488,1489,1512,1492,1501),cls:'g'},
+  {id:57,name:H(1502,1493,1513,1511,1493,1489,1497,1509,32,1502,1504,1495,1501),cls:'b'},{id:58,name:H(1502,1493,1513,1511,1493,1489,1497,1509,32,1513,1504,1497,1488,1493,1512),cls:'g'},
+  {id:59,name:H(1502,1495,1508,1493,1494,32,1502,1504,1495,1501,32,1502,1506,1504,1491,1500),cls:'a'},{id:60,name:H(1502,1495,1508,1493,1494,32,1504,1495,1502,1503),cls:'b'},
+  {id:61,name:H(1502,1494,1512,1495,1497,32,1497,1493,1504,1514,1503,32,1497,1488,1497,1512),cls:'a'},{id:62,name:H(1502,1494,1512,1495,1497,32,1488,1497,1514,1503,32,1488,1492,1512,1493,1503),cls:'a'},
+  {id:63,name:H(1502,1494,1512,1495,1497,32,1513,1500,1502,1492),cls:'g'},{id:64,name:H(1504,1495,1502,1497,1488,1505,32,1497,1493,1505,1507),cls:'g'},
+  {id:65,name:H(1504,1506,1502,1514,32,1497,1493,1505,1507,32,1497,1510,1495,1511),cls:'b'},{id:66,name:H(1505,1489,1490,32,1502,1504,1495,1501),cls:'g'},
+  {id:67,name:H(1505,1490,1500,32,1502,1504,1495,1501,32,1502,1506,1504,1491,1500),cls:'b'},{id:68,name:H(1505,1500,1502,1492,32,1497,1493,1505,1507,32,1497,1510,1495,1511),cls:'b'},
+  {id:69,name:H(1506,1493,1494,1497,1488,1500,32,1488,1512,1497,1492),cls:'g'},{id:70,name:H(1508,1489,1494,1504,1512,32,1513,1502,1493,1488,1500),cls:'b'},
+  {id:71,name:H(1508,1512,1497,1491,1502,1503,32,1513,1502,1493,1488,1500),cls:'g'},{id:72,name:H(1510,1491,1493,1511,32,1497,1493,1505,1507),cls:'g'},
+  {id:73,name:H(1511,1493,1492,1503,32,1502,1504,1495,1501,32,1502,1506,1504,1491,1500),cls:'g'},{id:74,name:H(1513,1500,1493,32,1512,1494),cls:'b'},
+  {id:75,name:H(1513,1500,1493,32,1512,1494,32,1489),cls:'g'}
 ];
+
+// Classes map: 'a'=alef, 'b'=bet, 'g'=gimel
+var CLS_NAME={a:H(1513,1497,1506,1493,1512,32,1488),b:H(1513,1497,1506,1493,1512,32,1489),g:H(1513,1497,1506,1493,1512,32,1490)};
 
 function getStudents(){return JSON.parse(localStorage.getItem('ys_students')||'null')||DEFAULT_STUDENTS;}
 function saveStudents(s){localStorage.setItem('ys_students',JSON.stringify(s));}
 function getAttendance(){return JSON.parse(localStorage.getItem('ys_attend')||'{}');}
 function saveAttendance(a){localStorage.setItem('ys_attend',JSON.stringify(a));}
-function getReasons(){return JSON.parse(localStorage.getItem('ys_reasons')||'null')||['השעיה (שמה"ס)','מצב חירום','חופשה','מחלה','שמחה משפחתית','נסיעה לרב','בית חולים','אחר'];}
+function getReasons(){return JSON.parse(localStorage.getItem('ys_reasons')||'null')||[H(1492,1513,1506,1497,1492,1492,32)+H(40)+H(1513,1502,1492)+H(34)+H(1505)+H(41),H(1502,1510,1489,32,1495,1497,1512,1493,1501),H(1495,1493,1508,1513,1492),H(1502,1495,1500,1492),H(1513,1502,1495,1492,32,1502,1513,1508,1495,1514,1497,1514),H(1504,1505,1497,1506,1492,32,1500,1512,1489),H(1489,1497,1514,32,1495,1493,1500,1497,1501),H(1488,1495,1512)];}
 function saveReasons(r){localStorage.setItem('ys_reasons',JSON.stringify(r));}
 function getApprovals(){return JSON.parse(localStorage.getItem('ys_approvals')||'{}');}
 function saveApprovals(a){localStorage.setItem('ys_approvals',JSON.stringify(a));}
-
 function todayKey(){return new Date().toISOString().slice(0,10);}
 
 function checkLoginNeeded(){
@@ -544,69 +547,61 @@ function checkLoginNeeded(){
   return false;
 }
 function doLogin(){
-  const p=document.getElementById('login-pass').value;
+  var p=document.getElementById('login-pass').value;
   if(p===ADMIN_PASS){
     isLoggedIn=true;localStorage.setItem('ys_admin','1');
     document.getElementById('login-modal').style.display='none';
     document.getElementById('login-pass').value='';
     renderStudents();
   } else {
-    document.getElementById('login-err').style.display='block';
-    setTimeout(()=>document.getElementById('login-err').style.display='none',2000);
+    var e=document.getElementById('login-err');
+    if(e){e.style.display='block';setTimeout(function(){e.style.display='none';},2000);}
   }
 }
 
 function filterClass(cls){
   currentFilter=cls;
-  ['all','a','b','c'].forEach(x=>document.getElementById('ct-'+x)?.classList.remove('on'));
-  const mp={all:'ct-all',א:'ct-a',ב:'ct-b',ג:'ct-c'};
-  document.getElementById(mp[cls]||'ct-all')?.classList.add('on');
+  ['all','a','b','g'].forEach(function(x){var el=document.getElementById('ct-'+x);if(el)el.classList.remove('on');});
+  var mp={all:'ct-all',a:'ct-a',b:'ct-b',g:'ct-g'};
+  var el=document.getElementById(mp[cls]||'ct-all');
+  if(el)el.classList.add('on');
   renderStudents();
 }
 
 function getStudentStatus(sid){
-  const today=todayKey();
-  const attend=getAttendance();
-  const approvals=getApprovals();
-  const dayA=attend[today]||{};
-  const appr=approvals[sid];
-  
-  // Check active approval
-  if(appr && appr.active){
-    const now=new Date();
-    const from=appr.fromGreg?new Date(appr.fromGreg):null;
-    const to=appr.toGreg?new Date(appr.toGreg):null;
-    if(from && to && now>=from && now<=to){
-      return {status:'approved',label:'באישור',color:'#ed8936',reason:appr.reason};
+  var today=todayKey();
+  var attend=getAttendance();
+  var approvals=getApprovals();
+  var dayA=attend[today]||{};
+  var appr=approvals[sid];
+  if(appr&&appr.active){
+    var now=new Date();
+    var from=appr.fromGreg?new Date(appr.fromGreg):null;
+    var to=appr.toGreg?new Date(appr.toGreg):null;
+    if(from&&to&&now>=from&&now<=to){
+      return {status:'approved',label:H(1489,1488,1497,1513,1493,1512),color:'#ed8936',reason:appr.reason};
     }
-    if(to && now>to){
-      // Auto-return
-      const a2=getApprovals();
-      a2[sid]={...appr,active:false};
-      saveApprovals(a2);
-    }
+    if(to&&now>to){var a2=getApprovals();a2[sid]={active:false};saveApprovals(a2);}
   }
-  
-  const rec=dayA[sid];
-  if(!rec) return {status:'unknown',label:'-',color:'#999'};
-  if(rec.present===true) return {status:'present',label:'✅ נוכח',color:'#38a169'};
-  if(rec.present===false) return {status:'absent',label:'❌ נעדר',color:'#e53e3e'};
+  var rec=dayA[sid];
+  if(!rec)return {status:'unknown',label:'-',color:'#999'};
+  if(rec.present===true)return {status:'present',label:H(1504,1493,1499,1495),color:'#38a169'};
+  if(rec.present===false)return {status:'absent',label:H(1504,1506,1491,1512),color:'#e53e3e'};
   return {status:'unknown',label:'-',color:'#999'};
 }
 
 function renderStudents(){
   var students=getStudents();
-  var search=(document.getElementById('search-st')?document.getElementById('search-st').value:'').toLowerCase();
+  var searchEl=document.getElementById('search-st');
+  var search=searchEl?searchEl.value.toLowerCase():'';
   var today=todayKey();
   var attend=getAttendance();
   var dayA=attend[today]||{};
-  
   var filtered=students.filter(function(s){
     if(currentFilter!=='all'&&s.cls!==currentFilter)return false;
-    if(search&&s.name.indexOf(search)<0&&search.length>0)return false;
+    if(search&&s.name.toLowerCase().indexOf(search)<0)return false;
     return true;
   });
-  
   var present=0,absent=0,approved=0;
   students.forEach(function(s){
     var st=getStudentStatus(s.id);
@@ -614,138 +609,125 @@ function renderStudents(){
     else if(st.status==='approved')approved++;
     else if(st.status==='absent')absent++;
   });
-  
   var sumEl=document.getElementById('st-summary');
   if(sumEl)sumEl.innerHTML=
-    '<span style="color:#38a169">&#x2705; נוכחים: '+present+'</span>&nbsp;&nbsp;'+
-    '<span style="color:#ed8936">&#x1F4CB; באישור: '+approved+'</span>&nbsp;&nbsp;'+
-    '<span style="color:#e53e3e">&#x274C; נעדרים: '+absent+'</span>&nbsp;&nbsp;'+
-    '<span style="color:#666">סה"כ: '+students.length+'</span>';
-  
-  // Update class tab labels
-  document.getElementById('ct-all').textContent='הכל ('+students.length+')';
-  document.getElementById('ct-a').textContent='שיעור א' ('+students.filter(function(s){return s.cls===String.fromCharCode(1488);}).length+')';}).length)+')';
-  document.getElementById('ct-b').textContent='שיעור ב' ('+students.filter(function(s){return s.cls===String.fromCharCode(1489);}).length+')';}).length)+')';
-  document.getElementById('ct-c').textContent='שיעור ג' ('+students.filter(function(s){return s.cls===String.fromCharCode(1490);}).length+')';}).length)+')';
-  
+    '<span style="color:#38a169">&#x2705; '+H(1504,1493,1499,1495,1497,1501)+': '+present+'</span>&nbsp;&nbsp;'+
+    '<span style="color:#ed8936">&#x1F4CB; '+H(1489,1488,1497,1513,1493,1512)+': '+approved+'</span>&nbsp;&nbsp;'+
+    '<span style="color:#e53e3e">&#x274C; '+H(1504,1506,1491,1512,1497,1501)+': '+absent+'</span>&nbsp;&nbsp;'+
+    '<span style="color:#666">'+H(1505,1492,34,1499)+': '+students.length+'</span>';
+  var ea=document.getElementById('ct-all');
+  if(ea)ea.textContent=H(1492,1499,1500)+' ('+students.length+')';
+  var ea2=document.getElementById('ct-a');
+  if(ea2)ea2.textContent=CLS_NAME.a+' ('+students.filter(function(s){return s.cls==='a';}).length+')';
+  var eb=document.getElementById('ct-b');
+  if(eb)eb.textContent=CLS_NAME.b+' ('+students.filter(function(s){return s.cls==='b';}).length+')';
+  var eg=document.getElementById('ct-g');
+  if(eg)eg.textContent=CLS_NAME.g+' ('+students.filter(function(s){return s.cls==='g';}).length+')';
   var tbody=document.getElementById('students-tbody');
   if(!tbody)return;
-  
   var html='';
   filtered.forEach(function(s,i){
     var st=getStudentStatus(s.id);
     var rec=dayA[s.id]||{};
     var appr=getApprovals()[s.id];
     var apprText='';
-    if(appr&&appr.active){
-      apprText=appr.reason;
-      if(appr.fromHeb)apprText+=' ('+appr.fromHeb+'-'+(appr.toHeb||'')+')';
-    }
+    if(appr&&appr.active){apprText=appr.reason+(appr.fromHeb?' ('+appr.fromHeb+'-'+(appr.toHeb||'')+')':'');}
     var bg=i%2===0?'#fff':'#f9fafb';
     if(st.status==='present')bg='#f0fff4';
     else if(st.status==='approved')bg='#fffaf0';
     else if(st.status==='absent')bg='#fff5f5';
-    
-    var pressBg=st.status==='present'?'#38a169':'#eee';
-    var pressCol=st.status==='present'?'white':'#333';
-    var absBg=st.status==='absent'?'#e53e3e':'#eee';
-    var absCol=st.status==='absent'?'white':'#333';
-    
+    var pb=st.status==='present'?'#38a169':'#eee';
+    var pc=st.status==='present'?'white':'#333';
+    var ab2=st.status==='absent'?'#e53e3e':'#eee';
+    var ac=st.status==='absent'?'white':'#333';
+    var clsLabel=CLS_NAME[s.cls]||s.cls;
     html+='<tr style="background:'+bg+';border-bottom:1px solid #eee">';
-    html+='<td style="padding:8px;text-align:right;font-weight:bold;color:#999;font-size:0.85em">'+s.id+'</td>';
+    html+='<td style="padding:8px;text-align:right;color:#aaa;font-size:0.82em">'+s.id+'</td>';
     html+='<td style="padding:8px;text-align:right;font-weight:500">'+s.name+'</td>';
-    html+='<td style="padding:8px;text-align:center"><span style="background:#e8eaf6;color:#3f51b5;padding:2px 8px;border-radius:12px;font-size:0.82em">שיעור '+s.cls+''</span></td>';
+    html+='<td style="padding:8px;text-align:center"><span style="background:#e8eaf6;color:#3f51b5;padding:2px 8px;border-radius:12px;font-size:0.82em">'+clsLabel+'</span></td>';
     html+='<td style="padding:8px;text-align:center">';
-    html+='<button onclick="togglePresent('+s.id+',true)" style="background:'+pressBg+';color:'+pressCol+';border:none;padding:4px 10px;border-radius:6px;cursor:pointer;margin:1px;font-size:0.9em">✅</button>';
-    html+='<button onclick="togglePresent('+s.id+',false)" style="background:'+absBg+';color:'+absCol+';border:none;padding:4px 10px;border-radius:6px;cursor:pointer;margin:1px;font-size:0.9em">❌</button>';
+    html+='<button onclick="togglePresent('+s.id+',true)" style="background:'+pb+';color:'+pc+';border:none;padding:4px 10px;border-radius:6px;cursor:pointer;margin:1px">&#x2705;</button>';
+    html+='<button onclick="togglePresent('+s.id+',false)" style="background:'+ab2+';color:'+ac+';border:none;padding:4px 10px;border-radius:6px;cursor:pointer;margin:1px">&#x274C;</button>';
     html+='</td>';
     html+='<td style="padding:8px;text-align:center"><span style="color:'+st.color+';font-weight:600;font-size:0.85em">'+st.label+'</span></td>';
-    html+='<td style="padding:8px;text-align:right;font-size:0.8em;color:#555;max-width:150px">';
-    if(apprText){
-      html+=apprText+'<button onclick="clearApproval('+s.id+')" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:0.8em;margin-right:4px">×</button>';
-    } else {
-      html+='<button onclick="openApproval('+s.id+')" style="background:#ebf8ff;color:#2b6cb0;border:1px solid #bee3f8;padding:3px 8px;border-radius:6px;cursor:pointer;font-size:0.82em">אישור</button>';
-    }
+    html+='<td style="padding:8px;text-align:right;font-size:0.82em;color:#555;max-width:150px">';
+    if(apprText){html+=apprText+'<button onclick="clearApproval('+s.id+')" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:0.9em;margin-right:4px">&#x2715;</button>';}
+    else{html+='<button onclick="openApproval('+s.id+')" style="background:#ebf8ff;color:#2b6cb0;border:1px solid #bee3f8;padding:3px 8px;border-radius:6px;cursor:pointer;font-size:0.82em">'+H(1488,1497,1513,1493,1512)+'</button>';}
     html+='</td>';
     html+='<td style="padding:8px;text-align:center;font-size:0.82em;color:#555">'+(rec.entryTime||'&#8212;')+'</td>';
     html+='<td style="padding:8px;text-align:center;font-size:0.82em;color:#555">'+(rec.exitTime||'&#8212;')+'</td>';
     html+='<td style="padding:8px;text-align:center">';
-    html+='<button onclick="editStudent('+s.id+')" style="background:none;border:none;cursor:pointer;font-size:1em" title="עריכה">✏️</button>';
-    html+='<button onclick="deleteStudent('+s.id+')" style="background:none;border:none;cursor:pointer;font-size:1em" title="מחיקה">🗑️</button>';
-    html+='<button onclick="recordTime('+s.id+')" style="background:none;border:none;cursor:pointer;font-size:1em" title="רשום זמן">⏱️</button>';
-    html+='</td>';
-    html+='</tr>';
+    html+='<button onclick="editStudent('+s.id+')" style="background:none;border:none;cursor:pointer" title="edit">&#x270F;&#xFE0F;</button>';
+    html+='<button onclick="deleteStudent('+s.id+')" style="background:none;border:none;cursor:pointer" title="delete">&#x1F5D1;&#xFE0F;</button>';
+    html+='<button onclick="recordTime('+s.id+')" style="background:none;border:none;cursor:pointer" title="time">&#x23F1;&#xFE0F;</button>';
+    html+='</td></tr>';
   });
   tbody.innerHTML=html;
 }
+
 function togglePresent(sid,present){
-  if(checkLoginNeeded()) return;
-  const today=todayKey();
-  const attend=getAttendance();
-  if(!attend[today]) attend[today]={};
-  const now=new Date();
-  const timeStr=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  const existing=attend[today][sid]||{};
-  if(present){
-    attend[today][sid]={...existing,present:true,entryTime:existing.entryTime||timeStr};
-  } else {
-    attend[today][sid]={...existing,present:false};
-  }
+  if(checkLoginNeeded())return;
+  var today=todayKey();
+  var attend=getAttendance();
+  if(!attend[today])attend[today]={};
+  var now=new Date();
+  var t=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  var ex=attend[today][sid]||{};
+  if(present){attend[today][sid]={present:true,entryTime:ex.entryTime||t,exitTime:ex.exitTime};}
+  else{attend[today][sid]={present:false,entryTime:ex.entryTime,exitTime:ex.exitTime};}
   saveAttendance(attend);
   renderStudents();
 }
 
 function recordTime(sid){
-  if(checkLoginNeeded()) return;
-  const today=todayKey();
-  const attend=getAttendance();
-  if(!attend[today]) attend[today]={};
-  const now=new Date();
-  const timeStr=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
-  const existing=attend[today][sid]||{};
-  if(!existing.entryTime){
-    attend[today][sid]={...existing,entryTime:timeStr,present:true};
-  } else {
-    attend[today][sid]={...existing,exitTime:timeStr};
-  }
+  if(checkLoginNeeded())return;
+  var today=todayKey();
+  var attend=getAttendance();
+  if(!attend[today])attend[today]={};
+  var now=new Date();
+  var t=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+  var ex=attend[today][sid]||{};
+  if(!ex.entryTime){attend[today][sid]={present:true,entryTime:t};}
+  else{attend[today][sid]={present:ex.present,entryTime:ex.entryTime,exitTime:t};}
   saveAttendance(attend);
   renderStudents();
 }
 
 function openAddStudent(){
-  if(checkLoginNeeded()) return;
+  if(checkLoginNeeded())return;
   editingStudentId=null;
-  document.getElementById('student-modal-title').textContent='➕ הוסף תלמיד';
-  document.getElementById('st-name').value='';
-  document.getElementById('st-class').value='א';
+  var t=document.getElementById('student-modal-title');
+  if(t)t.textContent=H(1492,1493,1505,1507,32,1514,1500,1502,1497,1491);
+  var n=document.getElementById('st-name');if(n)n.value='';
+  var c=document.getElementById('st-class');if(c)c.value='a';
   document.getElementById('student-modal').style.display='flex';
 }
 
 function editStudent(sid){
-  if(checkLoginNeeded()) return;
-  const s=getStudents().find(x=>x.id===sid);
-  if(!s) return;
+  if(checkLoginNeeded())return;
+  var s=getStudents().find(function(x){return x.id===sid;});
+  if(!s)return;
   editingStudentId=sid;
-  document.getElementById('student-modal-title').textContent='✏️ עריכת תלמיד';
-  document.getElementById('st-name').value=s.name;
-  document.getElementById('st-class').value=s.cls;
+  var t=document.getElementById('student-modal-title');
+  if(t)t.textContent=H(1506,1512,1497,1499,1514,32,1514,1500,1502,1497,1491);
+  var n=document.getElementById('st-name');if(n)n.value=s.name;
+  var c=document.getElementById('st-class');if(c)c.value=s.cls;
   document.getElementById('student-modal').style.display='flex';
 }
 
 function saveStudent(){
-  const name=document.getElementById('st-name').value.trim();
-  const cls=document.getElementById('st-class').value;
-  if(!name){alert('נא להזין שם');return;}
-  const students=getStudents();
+  var name=(document.getElementById('st-name')||{value:''}).value.trim();
+  var cls=(document.getElementById('st-class')||{value:'a'}).value;
+  if(!name){alert(H(1504,1488,32,1500,1492,1494,1497,1503,32,1513,1501));return;}
+  var students=getStudents();
   if(editingStudentId){
-    const idx=students.findIndex(s=>s.id===editingStudentId);
+    var idx=students.findIndex(function(s){return s.id===editingStudentId;});
     if(idx>-1){students[idx].name=name;students[idx].cls=cls;}
   } else {
-    const maxId=students.reduce((m,s)=>Math.max(m,s.id),0);
-    students.push({id:maxId+1,name,cls});
-    students.sort((a,b)=>a.name.localeCompare(b.name,'he'));
-    // Re-number
-    students.forEach((s,i)=>s.id=i+1);
+    var maxId=students.reduce(function(m,s){return Math.max(m,s.id);},0);
+    students.push({id:maxId+1,name:name,cls:cls});
+    students.sort(function(a,b){return a.name.localeCompare(b.name,'he');});
+    students.forEach(function(s,i){s.id=i+1;});
   }
   saveStudents(students);
   closeStudentModal();
@@ -755,13 +737,14 @@ function saveStudent(){
 function closeStudentModal(){document.getElementById('student-modal').style.display='none';}
 
 function deleteStudent(sid){
-  if(checkLoginNeeded()) return;
-  const s=getStudents().find(x=>x.id===sid);
-  if(!s) return;
-  document.getElementById('confirm-msg').textContent='האם למחוק את '+s.name+'?';
-  confirmCallback=()=>{
-    let students=getStudents().filter(x=>x.id!==sid);
-    students.forEach((s,i)=>s.id=i+1);
+  if(checkLoginNeeded())return;
+  var s=getStudents().find(function(x){return x.id===sid;});
+  if(!s)return;
+  var msg=document.getElementById('confirm-msg');
+  if(msg)msg.textContent=H(1492,1488,1501,32,1500,1502,1495,1493,1511,32,1488,1514,32)+s.name+'?';
+  confirmCallback=function(){
+    var students=getStudents().filter(function(x){return x.id!==sid;});
+    students.forEach(function(s,i){s.id=i+1;});
     saveStudents(students);
     renderStudents();
   };
@@ -772,87 +755,87 @@ function closeConfirm(){document.getElementById('confirm-modal').style.display='
 function confirmAction(){if(confirmCallback)confirmCallback();closeConfirm();}
 
 function openApproval(sid){
-  if(checkLoginNeeded()) return;
+  if(checkLoginNeeded())return;
   currentApprovalId=sid;
-  const s=getStudents().find(x=>x.id===sid);
-  document.getElementById('approval-student-name').textContent=s?s.name:'';
-  // Populate reasons
-  const reasons=getReasons();
-  const sel=document.getElementById('appr-reason');
-  sel.innerHTML=reasons.map(r=>'<option>'+r+'</option>').join('');
-  // Add edit reasons button
-  document.getElementById('other-text-wrap').style.display='none';
-  try{document.getElementById('appr-from-heb').value=hebrewDateShort();}catch(e){}
-  document.getElementById('appr-to-heb').value='';
-  document.getElementById('appr-from-time').value='';
-  document.getElementById('appr-to-time').value='';
+  var s=getStudents().find(function(x){return x.id===sid;});
+  var nameEl=document.getElementById('approval-student-name');
+  if(nameEl)nameEl.textContent=s?s.name:'';
+  var reasons=getReasons();
+  var sel=document.getElementById('appr-reason');
+  if(sel)sel.innerHTML=reasons.map(function(r){return '<option>'+r+'</option>';}).join('');
+  var ow=document.getElementById('other-text-wrap');if(ow)ow.style.display='none';
+  var fh=document.getElementById('appr-from-heb');
+  try{if(fh&&typeof hebrewDateShort==='function')fh.value=hebrewDateShort();}catch(e){}
+  var th=document.getElementById('appr-to-heb');if(th)th.value='';
+  var ft=document.getElementById('appr-from-time');if(ft)ft.value='';
+  var tt=document.getElementById('appr-to-time');if(tt)tt.value='';
   document.getElementById('approval-modal').style.display='flex';
 }
 
 function checkOther(){
-  const val=document.getElementById('appr-reason').value;
-  document.getElementById('other-text-wrap').style.display=val==='אחר'?'block':'none';
+  var val=(document.getElementById('appr-reason')||{value:''}).value;
+  var ow=document.getElementById('other-text-wrap');
+  if(ow)ow.style.display=(val===H(1488,1495,1512)?'block':'none');
 }
 
 function saveApproval(){
-  const reason=document.getElementById('appr-reason').value;
-  const other=document.getElementById('appr-other').value;
-  const finalReason=reason==='אחר'?other:reason;
-  const fromHeb=document.getElementById('appr-from-heb').value;
-  const toHeb=document.getElementById('appr-to-heb').value;
-  const fromTime=document.getElementById('appr-from-time').value;
-  const toTime=document.getElementById('appr-to-time').value;
-  const appr=getApprovals();
-  appr[currentApprovalId]={
-    reason:finalReason,fromHeb,toHeb,fromTime,toTime,active:true,
-    fromGreg:new Date().toISOString(),
-    toGreg:toHeb?new Date(Date.now()+7*86400000).toISOString():null
-  };
+  var reason=(document.getElementById('appr-reason')||{value:''}).value;
+  var other=(document.getElementById('appr-other')||{value:''}).value;
+  var finalReason=reason===H(1488,1495,1512)?other:reason;
+  var fromHeb=(document.getElementById('appr-from-heb')||{value:''}).value;
+  var toHeb=(document.getElementById('appr-to-heb')||{value:''}).value;
+  var fromTime=(document.getElementById('appr-from-time')||{value:''}).value;
+  var toTime=(document.getElementById('appr-to-time')||{value:''}).value;
+  var appr=getApprovals();
+  var now=new Date();
+  var returnDate=new Date(now.getTime()+7*86400000);
+  appr[currentApprovalId]={reason:finalReason,fromHeb:fromHeb,toHeb:toHeb,fromTime:fromTime,toTime:toTime,active:true,fromGreg:now.toISOString(),toGreg:returnDate.toISOString()};
   saveApprovals(appr);
   closeApproval();
   renderStudents();
 }
 
-
 function clearApproval(sid){
   if(checkLoginNeeded())return;
   var appr=getApprovals();
-  if(appr[sid]){appr[sid].active=false;saveApprovals(appr);}
+  if(appr[sid])appr[sid].active=false;
+  saveApprovals(appr);
   renderStudents();
 }
+
 function closeApproval(){document.getElementById('approval-modal').style.display='none';}
 
 function openReasonsEditor(){
-  if(checkLoginNeeded()) return;
+  if(checkLoginNeeded())return;
   renderReasonsList();
   document.getElementById('reasons-modal').style.display='flex';
 }
 
 function renderReasonsList(){
-  const reasons=getReasons();
-  document.getElementById('reasons-list').innerHTML=reasons.map((r,i)=>
-    '<div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid #eee">'+
-    '<span style="flex:1;direction:rtl">'+r+'</span>'+
-    (r==='אחר'?'':
-      '<button onclick="deleteReason('+i+')" style="background:none;border:none;cursor:pointer;color:#e53e3e;font-size:1em">🗑️</button>')+
-    '</div>'
-  ).join('');
+  var reasons=getReasons();
+  var list=document.getElementById('reasons-list');
+  if(!list)return;
+  list.innerHTML=reasons.map(function(r,i){
+    return '<div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid #eee">'+
+      '<span style="flex:1">'+r+'</span>'+
+      '<button onclick="deleteReason('+i+')" style="background:none;border:none;cursor:pointer;color:#e53e3e">&#x1F5D1;&#xFE0F;</button>'+
+    '</div>';
+  }).join('');
 }
 
 function addReason(){
-  const v=document.getElementById('new-reason').value.trim();
-  if(!v) return;
-  const reasons=getReasons();
-  const otherIdx=reasons.indexOf('אחר');
-  if(otherIdx>-1) reasons.splice(otherIdx,0,v);
-  else reasons.push(v);
+  var v=(document.getElementById('new-reason')||{value:''}).value.trim();
+  if(!v)return;
+  var reasons=getReasons();
+  var oi=reasons.indexOf(H(1488,1495,1512));
+  if(oi>-1)reasons.splice(oi,0,v);else reasons.push(v);
   saveReasons(reasons);
   document.getElementById('new-reason').value='';
   renderReasonsList();
 }
 
 function deleteReason(i){
-  const reasons=getReasons();
+  var reasons=getReasons();
   reasons.splice(i,1);
   saveReasons(reasons);
   renderReasonsList();
@@ -861,50 +844,23 @@ function deleteReason(i){
 function closeReasons(){document.getElementById('reasons-modal').style.display='none';}
 
 function printStudents(){
-  const students=getStudents();
-  const today=hebrewDate();
-  let rows=students.map((s,i)=>{
-    const st=getStudentStatus(s.id);
-    return '<tr><td>'+(i+1)+'</td><td>'+s.name+'</td><td>שיעור '+s.cls+''</td><td style="color:'+st.color+'">'+st.label+'</td><td></td></tr>';
+  var students=getStudents();
+  var today='';
+  try{today=hebrewDate();}catch(e){today=new Date().toLocaleDateString('he-IL');}
+  var rows=students.map(function(s,i){
+    var st=getStudentStatus(s.id);
+    return '<tr><td>'+(i+1)+'</td><td>'+s.name+'</td><td>'+CLS_NAME[s.cls]+'</td><td style="color:'+st.color+'">'+st.label+'</td><td></td></tr>';
   }).join('');
-  const w=window.open('','_blank');
-  w.document.write('<html dir="rtl"><head><title>מצבת תלמידים</title><style>body{font-family:Arial;direction:rtl}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:6px 10px;text-align:right}th{background:#1a3c6e;color:white}.date{color:red;font-weight:bold;margin:8px 0}h2{text-align:center}
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;justify-content:center;align-items:center}
-.modal-box{background:white;border-radius:16px;padding:24px;width:90%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,0.3);direction:rtl;max-height:90vh;overflow-y:auto}
-.modal-box h3{margin:0 0 16px;color:#1a3c6e}
-.modal-box label{font-size:0.85em;font-weight:600;color:#555;display:block;margin-bottom:3px}
-.modal-box input,.modal-box select,.modal-box textarea{direction:rtl}
-.class-tabs .btn.on{background:#1a3c6e;color:white}
-.btn.sm{padding:5px 12px;font-size:0.85em}
-</style></head><body>'+
-    '<h2>מצבת תלמידים מתעדכנת</h2>'+
-    '<div class="date">חותמת זמן: '+today+' | '+new Date().toLocaleTimeString('he-IL')+'</div>'+
-    '<table><thead><tr><th>מס'</th><th>שם התלמיד</th><th>שיעור</th><th>נוכחות</th><th>הערות</th></tr></thead><tbody>'+rows+'</tbody></table>'+
-    '<p style="text-align:center;margin-top:20px;font-weight:bold">יחי אדוננו מורנו ורבינו מלך המשיח לעולם ועד!</p>'+
+  var w=window.open('','_blank');
+  w.document.write('<html dir="rtl"><head><title>'+H(1502,1510,1489,1514,32,1514,1500,1502,1497,1491,1497,1501)+'</title><style>body{font-family:Arial,sans-serif;direction:rtl;margin:20px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccc;padding:6px 10px;text-align:right}th{background:#1a3c6e;color:white}.ts{color:red;font-weight:bold;margin:8px 0}h2{text-align:center}@media print{button{display:none}}</style></head><body>'+
+    '<h2>'+H(1502,1510,1489,1514,32,1514,1500,1502,1497,1491,1497,1501,32,1502,1514,1506,1491,1499,1504,1514)+'</h2>'+
+    '<div class="ts">'+today+' | '+new Date().toLocaleTimeString('he-IL')+'</div>'+
+    '<table><thead><tr><th>'+H(1502,1505)+'</th><th>'+H(1513,1501,32,1492,1514,1500,1502,1497,1491)+'</th><th>'+H(1513,1497,1506,1493,1512)+'</th><th>'+H(1504,1493,1499,1495,1493,1514)+'</th><th>'+H(1492,1506,1512,1493,1514)+'</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<p style="text-align:center;margin-top:20px;font-weight:bold">'+H(1497,1495,1497,32,1488,1491,1493,1504,1504,1493,32,1502,1493,1512,1504,1493,32,1493,1512,1489,1497,1504,1493,32,1502,1500,1498,32,1492,1502,1513,1497,1495,32,1500,1506,1493,1500,1501,32,1493,1506,1491)+'!</p>'+
+    '<button onclick="window.print()" style="margin-top:10px;padding:8px 20px;background:#1a3c6e;color:white;border:none;border-radius:6px;cursor:pointer">'+H(1492,1491,1508,1505)+'</button>'+
     '</body></html>');
   w.document.close();
-  w.print();
 }
-
-// Hook into page navigation
-function onStudentsPageOpen(){
-  if(!isLoggedIn){
-    document.getElementById('login-modal').style.display='flex';
-    setTimeout(()=>document.getElementById('login-pass')?.focus(),100);
-  }
-  renderStudents();
-}
-
-// Expose for modal close on outside click
-document.addEventListener('click',function(e){
-  if(e.target.classList.contains('modal-overlay')){
-    e.target.style.display='none';
-  }
-
-
-
-
-});
 // ============ END STUDENTS MODULE ============
 
 </script>
