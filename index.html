@@ -9,10 +9,10 @@
 :root{
   // ===== NAVIGATION =====
   window.showPage=function(pg){
-    document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
+    document.querySelectorAll('.pg').forEach(funcdocument.addEventListener('DOMContentLoaded',function(){
+tion(p){p.classList.remove('on');});
     document.querySelectorAll('[data-pg]').forEach(function(b){b.classList.remove('on');});
-    var pgEl=document.getElementById('pg-'+pg);
-    var nbEl=document.querySelector('[data-pg="'+pg+'"]');
+});   var nbEl=document.querySelector('[data-pg="'+pg+'"]');
     if(pgEl) pgEl.classList.add('on');
     if(nbEl) nbEl.classList.add('on');
     if(pg==='students'){
@@ -354,20 +354,22 @@ document.getElementById('rm').value=TODAY.substring(0,7);
 function hebrewDateFull(d){d=d||new Date();var days=["אחד","שני","שלישי","רביעי","חמישי","ששי","שבת"];var w="יום "+days[d.getDay()];return w+", "+hebrewDate(d);}
 
 
-function showPg(n){
-  document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on')});
-  document.querySelectorAll('.nb').forEach(function(b){b.classList.remove('on')});
-  var pg=document.getElementById('pg-'+n);if(pg)pg.classList.add('on');
-  document.querySelectorAll('.nb[data-pg="'+n+'"]').forEach(function(b){b.classList.add('on')});
-  window.scrollTo(0,0);
-  if(n==='students')loadSt();
-  else if(n==='attend')loadA(document.getElementById('dp').value);
-  else if(n==='home')loadDash();
+function showPage(pg){
+  document.querySelectorAll('.pg').forEach(function(p){p.classList.remove('on');});
+  document.querySelectorAll('[data-pg]').forEach(function(b){b.classList.remove('on');});
+  var pgEl=document.getElementById('pg-'+pg);
+  var nbEl=document.querySelector('[data-pg="'+pg+'"]');
+  if(pgEl) pgEl.classList.add('on');
+  if(nbEl) nbEl.classList.add('on');
+  if(pg==='students'){
+    var li=localStorage.getItem('ys_admin')==='1';
+    if(!li){
+      var lm=document.getElementById('login-modal');
+      if(lm)lm.style.display='flex';
+    }
+    if(typeof renderStudents==='function') renderStudents();
+  }
 }
-document.querySelectorAll('.nb[data-pg]').forEach(function(b){b.addEventListener('click',function(){showPg(this.getAttribute('data-pg'))})});
-document.querySelectorAll('.mod[data-pg]').forEach(function(b){b.addEventListener('click',function(){showPg(this.getAttribute('data-pg'))})});
-document.querySelectorAll('.back[data-pg]').forEach(function(b){b.addEventListener('click',function(){showPg(this.getAttribute('data-pg'))})});
-document.querySelectorAll('.gear[data-gear]').forEach(function(b){b.addEventListener('click',function(){var id='ep-'+this.getAttribute('data-gear');var el=document.getElementById(id);if(el)el.classList.toggle('open')})});
 
 function closeEp(id){var el=document.getElementById(id);if(el)el.classList.remove('open')}
 function saveEp(n){closeEp('ep-'+n);toast('✅ נשמר!')}
@@ -387,10 +389,6 @@ function loadDash(){
   });
 }
 
-function loadSt(){
-  document.getElementById('stb').innerHTML='<tr><td colspan="5"><div class="ld">טוען...</div></td></tr>';
-  SB.from('students').select('*').eq('active',true).order('name').then(function(r){students=r.data||[];renderSt(students)});
-}
 function renderSt(list){
   var tb=document.getElementById('stb');
   if(!list.length){tb.innerHTML='<tr><td colspan="5"><div class="empty">אין תלמידים</div></td></tr>';return}
@@ -532,7 +530,7 @@ var DEFAULT_STUDENTS=[
 // Classes map: 'a'=alef, 'b'=bet, 'g'=gimel
 var CLS_NAME={a:H(1513,1497,1506,1493,1512,32,1488),b:H(1513,1497,1506,1493,1512,32,1489),g:H(1513,1497,1506,1493,1512,32,1490)};
 
-function getStudents(){return JSON.parse(localStorage.getItem('ys_students')||'null')||DEFAULT_STUDENTS;}
+function getStudents(){try{var s=JSON.parse(localStorage.getItem('ys_students')||'null');return(s&&s.length)?s:DEFAULT_STUDENTS;}catch(e){return DEFAULT_STUDENTS;}}
 function saveStudents(s){localStorage.setItem('ys_students',JSON.stringify(s));}
 function getAttendance(){return JSON.parse(localStorage.getItem('ys_attend')||'{}');}
 function saveAttendance(a){localStorage.setItem('ys_attend',JSON.stringify(a));}
