@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('sw.js');}<\/script>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>מערכת ניהול | ישיבת תומכי תמימים ראשל"צ</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
@@ -141,7 +141,83 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 #toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 22px;border-radius:30px;font-size:.88rem;font-weight:500;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:var(--shadow2)}
 #toast.on{opacity:1}
 @media(max-width:960px){.mods{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:640px){.mods{grid-template-columns:1fr}.inner{padding:16px 12px}.mods-wrap{padding:18px 14px}.hero{padding:24px 16px 32px}}
+@media(max-width:960px){.mods{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){
+  .mods{grid-template-columns:1fr}
+  .inner{padding:14px 10px}
+  .mods-wrap{padding:14px 10px}
+  .hero{padding:18px 14px 24px}
+  .hero-title{font-size:1.3rem}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .stat{padding:12px 8px}
+  .stat .n{font-size:1.5rem}
+  header{height:60px;padding:0 12px}
+  .logo{width:46px;height:46px}
+  .hdiv{display:none}
+  .htxt{font-size:.78rem}
+  .htxt strong{font-size:.88rem}
+  nav{gap:2px}
+  .nb{padding:6px 8px;font-size:.75rem;gap:4px}
+  .mod{padding:16px 14px;gap:10px}
+  .mod-ic{width:40px;height:40px;font-size:1.25rem;border-radius:8px}
+  .mod-name{font-size:.88rem}
+  .mod-desc{font-size:.74rem}
+  .mods-lbl{font-size:.75rem;margin-bottom:12px}
+  .ptitle{font-size:1.1rem;margin-bottom:16px}
+  table{font-size:.82rem}
+  th{padding:9px 10px;font-size:.78rem}
+  td{padding:8px 10px}
+  .btn{padding:8px 14px;font-size:.82rem}
+  .rh{margin-bottom:12px}
+  .tw{border-radius:8px}
+}
+@media(max-width:400px){
+  .nb .nb-lbl{display:none}
+  .nb{padding:7px 9px;font-size:1rem}
+  header{height:56px}
+  .logo{width:40px;height:40px}
+}
+
+/* ===== BOTTOM NAV - MOBILE ONLY ===== */
+.bottom-nav{display:none}
+@media(max-width:640px){
+  body{padding-bottom:64px}
+  .bottom-nav{
+    display:flex;
+    position:fixed;
+    bottom:0;left:0;right:0;
+    height:64px;
+    background:linear-gradient(135deg,#0f2347,#1a3a6b);
+    border-top:1px solid rgba(255,255,255,.15);
+    z-index:200;
+    align-items:center;
+    justify-content:space-around;
+    box-shadow:0 -2px 12px rgba(0,0,0,.25);
+    padding:0 4px;
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  .bn{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    flex:1;height:100%;gap:3px;
+    background:none;border:none;
+    color:rgba(255,255,255,.6);
+    font-family:Heebo;font-size:.62rem;font-weight:500;
+    cursor:pointer;transition:all .18s;
+    padding:4px 2px;border-radius:8px;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .bn .bn-ic{font-size:1.35rem;line-height:1}
+  .bn.on{color:#fff}
+  .bn.on .bn-ic{transform:scale(1.15)}
+  .bn:active{background:rgba(255,255,255,.1)}
+  /* הסתר nav עליון במובייל */
+  nav{display:none}
+  /* הסתר את header text במובייל */
+  .hdiv,.htxt{display:none}
+  header{justify-content:space-between;padding:0 14px}
+  .hl{gap:10px}
+}
+
 </style>
 </head>
 <body>
@@ -862,11 +938,55 @@ function printStudents(){
     '<table><thead><tr><th>'+H(1502,1505)+'</th><th>'+H(1513,1501,32,1492,1514,1500,1502,1497,1491)+'</th><th>'+H(1513,1497,1506,1493,1512)+'</th><th>'+H(1504,1493,1499,1495,1493,1514)+'</th><th>'+H(1492,1506,1512,1493,1514)+'</th></tr></thead><tbody>'+rows+'</tbody></table>'+
     '<p style="text-align:center;margin-top:20px;font-weight:bold">'+H(1497,1495,1497,32,1488,1491,1493,1504,1504,1493,32,1502,1493,1512,1504,1493,32,1493,1512,1489,1497,1504,1493,32,1502,1500,1498,32,1492,1502,1513,1497,1495,32,1500,1506,1493,1500,1501,32,1493,1506,1491)+'!</p>'+
     '<button onclick="window.print()" style="margin-top:10px;padding:8px 20px;background:#1a3c6e;color:white;border:none;border-radius:6px;cursor:pointer">'+H(1492,1491,1508,1505)+'</button>'+
-    '</body></html>');
+    '
+<nav class="bottom-nav" id="bottom-nav">
+  <button class="bn on" data-pg="home" onclick="window.showPage('home');document.querySelectorAll('.bn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">
+    <span class="bn-ic">🏠</span><span>ראשי</span>
+  </button>
+  <button class="bn" data-pg="students" onclick="window.showPage('students');document.querySelectorAll('.bn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">
+    <span class="bn-ic">👥</span><span>מצבת</span>
+  </button>
+  <button class="bn" data-pg="attend" onclick="window.showPage('attend');document.querySelectorAll('.bn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">
+    <span class="bn-ic">✅</span><span>סדרים</span>
+  </button>
+  <button class="bn" data-pg="sleep" onclick="window.showPage('sleep');document.querySelectorAll('.bn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">
+    <span class="bn-ic">🌙</span><span>שינה</span>
+  </button>
+  <button class="bn" data-pg="exams" onclick="window.showPage('exams');document.querySelectorAll('.bn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">
+    <span class="bn-ic">📝</span><span>מבחנים</span>
+  </button>
+  <button class="bn" data-pg="reports" onclick="window.showPage('reports');document.querySelectorAll('.bn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">
+    <span class="bn-ic">📊</span><span>דוחות</span>
+  </button>
+</nav>
+
+</body></html>');
   w.document.close();
 }
 // ============ END STUDENTS MODULE ============
 
 </script>
+
+<nav class="bottom-nav" id="bottom-nav">
+  <button class="bn on" data-pg="home" onclick="window.showPage('home');document.querySelectorAll('.bn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">
+    <span class="bn-ic">🏠</span><span>ראשי</span>
+  </button>
+  <button class="bn" data-pg="students" onclick="window.showPage('students');document.querySelectorAll('.bn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">
+    <span class="bn-ic">👥</span><span>מצבת</span>
+  </button>
+  <button class="bn" data-pg="attend" onclick="window.showPage('attend');document.querySelectorAll('.bn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">
+    <span class="bn-ic">✅</span><span>סדרים</span>
+  </button>
+  <button class="bn" data-pg="sleep" onclick="window.showPage('sleep');document.querySelectorAll('.bn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">
+    <span class="bn-ic">🌙</span><span>שינה</span>
+  </button>
+  <button class="bn" data-pg="exams" onclick="window.showPage('exams');document.querySelectorAll('.bn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">
+    <span class="bn-ic">📝</span><span>מבחנים</span>
+  </button>
+  <button class="bn" data-pg="reports" onclick="window.showPage('reports');document.querySelectorAll('.bn').forEach(b=>b.classList.remove('on'));this.classList.add('on')">
+    <span class="bn-ic">📊</span><span>דוחות</span>
+  </button>
+</nav>
+
 </body>
 </html>
