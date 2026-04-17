@@ -417,11 +417,8 @@ html.force-mobile .bottom-nav{display:flex !important;position:fixed;bottom:0;le
 (function(){
   var ua = navigator.userAgent || '';
   var isAndroid = /Android/.test(ua);
-  var isWebView = /wv\b/.test(ua) || /WebView/.test(ua);
-  if (isAndroid && /Chrome\//.test(ua) && !/Version\//.test(ua)) isWebView = true;
-  // הכי בטוח: אם ה-URL מכיל ?apk=1 - זה בוודאות APK שלנו
   var isAPK = window.location.search.indexOf('apk=1') !== -1;
-  if (isAPK || isWebView || (isAndroid && window.screen.width < 900)) {
+  if (isAndroid || isAPK) {
     document.documentElement.classList.add('force-mobile');
   }
 })();
