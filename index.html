@@ -162,12 +162,11 @@ header{height:62px;padding:0 14px}
 .logo{width:48px;height:48px}
 .hdiv{display:none}
 nav{display:none}
-.mod{padding:22px 20px;gap:16px;border-radius:16px;text-align:right;justify-content:flex-end;flex-direction:row-reverse}
-.mod::before{right:auto;left:0;border-radius:16px 0 0 16px}
+.mod{padding:22px 20px;gap:16px;border-radius:16px;text-align:right;flex-direction:row}
 .mod-ic{width:56px;height:56px;font-size:1.6rem;border-radius:14px;flex-shrink:0}
 .mod-info{flex:1;text-align:right}
-.mod-name{font-size:1.1rem;font-weight:700}
-.mod-desc{font-size:.86rem;line-height:1.45;color:var(--text2)}
+.mod-name{font-size:1.15rem;font-weight:700}
+.mod-desc{font-size:.88rem;line-height:1.45;color:var(--text2)}
 .mods-lbl{font-size:.84rem;margin-bottom:16px;text-align:right}
 .ptitle{font-size:1.15rem;margin-bottom:14px}
 table{font-size:.85rem}
@@ -197,17 +196,6 @@ body{padding-bottom:130px}
   body{padding-bottom:64px}
   .bottom-nav{
     display:flex;
-    position:fixed;
-    bottom:0;left:0;right:0;
-    height:64px;
-    background:linear-gradient(135deg,#0f2347,#1a3a6b);
-    border-top:1px solid rgba(255,255,255,.15);
-    z-index:200;
-    align-items:center;
-    justify-content:space-around;
-    box-shadow:0 -2px 12px rgba(0,0,0,.25);
-    padding:0 4px;
-    padding-bottom:env(safe-area-inset-bottom,0px);
   }
   .bn{
     display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -223,9 +211,7 @@ body{padding-bottom:130px}
   .bn.on{color:#fff}
   .bn.on .bn-ic{transform:scale(1.15)}
   .bn:active{background:rgba(255,255,255,.1)}
-  /* הסתר nav עליון במובייל */
   nav{display:none}
-  /* הסתר את header text במובייל */
   .hdiv,.htxt{display:none}
   header{justify-content:space-between;padding:0 14px}
   .hl{gap:10px}
