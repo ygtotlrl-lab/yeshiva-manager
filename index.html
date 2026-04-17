@@ -280,7 +280,7 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
       <button class="mod" data-pg="exams" style="--color:#a07830;--icbg:#fff8e8"><div class="mod-ic">📝</div><div class="mod-info"><div class="mod-name">מבחנים</div><div class="mod-desc">ניהול בחינות, ציונים ותוצאות</div></div></button>
       <button class="mod" data-pg="files" style="--color:#c0392b;--icbg:#fdf0f0"><div class="mod-ic">📁</div><div class="mod-info"><div class="mod-name">תיקים אישיים</div><div class="mod-desc">מסמכים, הערות ומעקב אישי לכל תלמיד</div></div></button>
       <button class="mod" data-pg="reports" style="--color:#0a6a8a;--icbg:#e8f5fa"><div class="mod-ic">📊</div><div class="mod-info"><div class="mod-name">גיליונות חודשיים</div><div class="mod-desc">דוחות נוכחות, סטטיסטיקות וסיכומים</div></div></button>
-      <button class="mod" onclick="backupAll()" style="--color:#2d7a2d;--icbg:#eafaea"><div class="mod-ic">💾</div><div class="mod-info"><div class="mod-name">גיבוי נתונים</div><div class="mod-desc">הורדת גיבוי מלא של כל הנתונים מהענן</div></div></button>
+
     </div>
   </div>
 </div>
@@ -581,6 +581,108 @@ var tt;function toast(m){var t=document.getElementById('toast');t.textContent=m;
 
 loadDash();
 
+// ============ CLOUD SYNC ============
+var _ysLastTs = 0;
+var _ysSyncing = false;
+
+function ysKvSet(key, value) {
+  return SB.from('kv').upsert({key: key, value: JSON.stringify(value)}, {onConflict: 'key'});
+}
+function ysKvGet(key) {
+  return SB.from('kv').select('value').eq('key', key).single().then(function(r){
+    if (r.data) try { return JSON.parse(r.data.value); } catch(e) { return null; }
+    return null;
+  });
+}
+
+async function ysPushToCloud() {
+  try {
+    var students = getStudents();
+    var attend = getAttendance();
+    var approvals = getApprovals();
+    var reasons = getReasons();
+    var ts = Date.now();
+    var r = await ysKvSet('ys_students', students);
+    if (r.error && r.error.message && r.error.message.indexOf('kv') !== -1) {
+      console.log('[ys-sync] kv table missing, skipping push');
+      return;
+    }
+    await ysKvSet('ys_attend', attend);
+    await ysKvSet('ys_approvals', approvals);
+    await ysKvSet('ys_reasons', reasons);
+    await ysKvSet('ys_last_changed', ts);
+    _ysLastTs = ts;
+    console.log('[ys-sync] pushed ts=' + ts);
+  } catch(e) { console.error('[ys-sync] push error:', e); }
+}
+
+async function ysPullFromCloud() {
+  try {
+    var s = await ysKvGet('ys_students');
+    if (s && Array.isArray(s) && s.length) {
+      localStorage.setItem('ys_students', JSON.stringify(s));
+    }
+    var a = await ysKvGet('ys_attend');
+    if (a && typeof a === 'object') {
+      localStorage.setItem('ys_attend', JSON.stringify(a));
+    }
+    var ap = await ysKvGet('ys_approvals');
+    if (ap && typeof ap === 'object') {
+      localStorage.setItem('ys_approvals', JSON.stringify(ap));
+    }
+    var rs = await ysKvGet('ys_reasons');
+    if (rs && Array.isArray(rs)) {
+      localStorage.setItem('ys_reasons', JSON.stringify(rs));
+    }
+    if (typeof renderStudents === 'function') renderStudents();
+    loadDash();
+  } catch(e) { console.error('[ys-sync] pull error:', e); }
+}
+
+async function ysAutoSync() {
+  if (_ysSyncing) return;
+  _ysSyncing = true;
+  try {
+    var r = await SB.from('kv').select('value').eq('key', 'ys_last_changed').single();
+    if (!r.data) { _ysSyncing = false; return; }
+    var remoteTs = parseInt(JSON.parse(r.data.value)) || 0;
+    if (remoteTs > _ysLastTs) {
+      _ysLastTs = remoteTs;
+      await ysPullFromCloud();
+    }
+  } catch(e) { /* offline - silent */ }
+  _ysSyncing = false;
+}
+
+// Start polling every 3 seconds
+setInterval(ysAutoSync, 3000);
+
+// Initial load from cloud on startup - with auto-create kv table if missing
+setTimeout(async function() {
+  try {
+    var r = await SB.from('kv').select('value').eq('key', 'ys_last_changed').single();
+    if (r.error && r.error.message && r.error.message.indexOf('relation') !== -1) {
+      // Table doesn't exist - create it via RPC/SQL
+      await SB.rpc('exec_sql', {sql: 'CREATE TABLE IF NOT EXISTS kv (key text PRIMARY KEY, value text); ALTER TABLE kv ENABLE ROW LEVEL SECURITY; CREATE POLICY IF NOT EXISTS "allow_all" ON kv FOR ALL USING (true) WITH CHECK (true);'});
+      console.log('[ys-sync] kv table created');
+      return;
+    }
+    if (r.data) {
+      var remoteTs = parseInt(JSON.parse(r.data.value)) || 0;
+      _ysLastTs = remoteTs;
+      await ysPullFromCloud();
+    }
+  } catch(e) { console.log('[ys-sync] init:', e.message||e); }
+}, 1500);
+
+// Debounced push
+var _ysPushTimer = null;
+function scheduleYsPush() {
+  if (_ysPushTimer) clearTimeout(_ysPushTimer);
+  _ysPushTimer = setTimeout(function() { ysPushToCloud(); }, 400);
+}
+// ============ END CLOUD SYNC ============
+
 // ============ STUDENTS MODULE ============
 var ADMIN_PASS='yeshiva2024';
 var isLoggedIn=localStorage.getItem('ys_admin')==='1';
@@ -778,6 +880,7 @@ function togglePresent(sid,present){
   if(present){attend[today][sid]={present:true,entryTime:ex.entryTime||t,exitTime:ex.exitTime};}
   else{attend[today][sid]={present:false,entryTime:ex.entryTime,exitTime:ex.exitTime};}
   saveAttendance(attend);
+  scheduleYsPush();
   renderStudents();
 }
 
@@ -792,6 +895,7 @@ function recordTime(sid){
   if(!ex.entryTime){attend[today][sid]={present:true,entryTime:t};}
   else{attend[today][sid]={present:ex.present,entryTime:ex.entryTime,exitTime:t};}
   saveAttendance(attend);
+  scheduleYsPush();
   renderStudents();
 }
 
@@ -832,6 +936,7 @@ function saveStudent(){
     students.forEach(function(s,i){s.id=i+1;});
   }
   saveStudents(students);
+  scheduleYsPush();
   closeStudentModal();
   renderStudents();
 }
@@ -848,6 +953,7 @@ function deleteStudent(sid){
     var students=getStudents().filter(function(x){return x.id!==sid;});
     students.forEach(function(s,i){s.id=i+1;});
     saveStudents(students);
+    scheduleYsPush();
     renderStudents();
   };
   document.getElementById('confirm-modal').style.display='flex';
@@ -893,6 +999,7 @@ function saveApproval(){
   var returnDate=new Date(now.getTime()+7*86400000);
   appr[currentApprovalId]={reason:finalReason,fromHeb:fromHeb,toHeb:toHeb,fromTime:fromTime,toTime:toTime,active:true,fromGreg:now.toISOString(),toGreg:returnDate.toISOString()};
   saveApprovals(appr);
+  scheduleYsPush();
   closeApproval();
   renderStudents();
 }
@@ -902,6 +1009,7 @@ function clearApproval(sid){
   var appr=getApprovals();
   if(appr[sid])appr[sid].active=false;
   saveApprovals(appr);
+  scheduleYsPush();
   renderStudents();
 }
 
@@ -932,6 +1040,7 @@ function addReason(){
   var oi=reasons.indexOf(H(1488,1495,1512));
   if(oi>-1)reasons.splice(oi,0,v);else reasons.push(v);
   saveReasons(reasons);
+  scheduleYsPush();
   document.getElementById('new-reason').value='';
   renderReasonsList();
 }
@@ -940,6 +1049,7 @@ function deleteReason(i){
   var reasons=getReasons();
   reasons.splice(i,1);
   saveReasons(reasons);
+  scheduleYsPush();
   renderReasonsList();
 }
 
