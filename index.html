@@ -147,29 +147,41 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
   .rh{margin-bottom:12px}
   .tw{border-radius:8px}
 }
-/* ===== FORCE MOBILE - APK / Android WebView ===== */
-.mods{grid-template-columns:1fr !important}
-.inner{padding:14px 10px !important}
-.mods-wrap{padding:14px 10px !important}
-.hero{padding:18px 14px 24px !important}
-.stats{grid-template-columns:repeat(2,1fr) !important}
-.stat{padding:12px 8px !important}
-header{height:60px !important;padding:0 12px !important}
-.logo{width:46px !important;height:46px !important}
-.hdiv{display:none !important}
-nav{display:none !important}
-.mod{padding:16px 14px !important;gap:10px !important}
-.mod-ic{width:40px !important;height:40px !important;font-size:1.25rem !important}
-.mod-name{font-size:.88rem !important}
-.mod-desc{font-size:.74rem !important}
-.ptitle{font-size:1.1rem !important}
-table{font-size:.82rem !important}
-th{padding:9px 10px !important;font-size:.78rem !important}
-td{padding:8px 10px !important}
-.btn{padding:8px 14px !important;font-size:.82rem !important}
-body{padding-bottom:64px !important}
-.bottom-nav{display:flex !important;position:fixed;bottom:0;left:0;right:0;height:64px;background:linear-gradient(135deg,#0f2347,#1a3a6b);border-top:1px solid rgba(255,255,255,.15);z-index:200;align-items:center;justify-content:space-around;box-shadow:0 -2px 12px rgba(0,0,0,.25);padding:0 4px;padding-bottom:env(safe-area-inset-bottom,0px)}
-/* ================================================= */
+/* ===== MOBILE DEFAULT LAYOUT ===== */
+.mods{grid-template-columns:repeat(2,1fr)}
+.mods-wrap{padding:16px 12px 20px}
+.inner{padding:14px 12px}
+.hero{padding:20px 16px 26px}
+.hero-title{font-size:1.4rem}
+.hero-sub{font-size:.88rem}
+.stats{grid-template-columns:repeat(2,1fr)}
+.stat{padding:14px 10px}
+.stat .n{font-size:1.6rem}
+.stat .l{font-size:.72rem}
+header{height:58px;padding:0 14px}
+.logo{width:44px;height:44px}
+.hdiv{display:none}
+nav{display:none}
+.mod{padding:16px 14px;gap:12px;border-radius:14px}
+.mod-ic{width:44px;height:44px;font-size:1.3rem;border-radius:10px}
+.mod-name{font-size:.92rem}
+.mod-desc{font-size:.76rem;line-height:1.35}
+.mods-lbl{font-size:.76rem;margin-bottom:14px}
+.ptitle{font-size:1.05rem;margin-bottom:14px}
+table{font-size:.82rem}
+th{padding:9px 10px;font-size:.78rem}
+td{padding:8px 10px}
+.btn{padding:8px 16px;font-size:.84rem}
+.rh{margin-bottom:12px}
+.tw{border-radius:10px}
+body{padding-bottom:68px}
+.bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;height:68px;background:linear-gradient(135deg,#0f2347,#1a3a6b);border-top:1px solid rgba(255,255,255,.15);z-index:200;align-items:center;justify-content:space-around;box-shadow:0 -3px 16px rgba(0,0,0,.3);padding:0 4px;padding-bottom:env(safe-area-inset-bottom,0px)}
+.bn{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;height:100%;gap:4px;background:none;border:none;color:rgba(255,255,255,.65);font-family:Heebo;font-size:.6rem;font-weight:500;cursor:pointer;transition:all .18s;padding:4px 2px;border-radius:8px;-webkit-tap-highlight-color:transparent}
+.bn .bn-ic{font-size:1.4rem;line-height:1}
+.bn.on{color:#fff}
+.bn.on .bn-ic{transform:scale(1.18)}
+.bn:active{background:rgba(255,255,255,.12)}
+/* ================================== */
 @media(max-width:480px){
   .nb .nb-lbl{display:none}
   .nb{padding:7px 9px;font-size:1rem}
