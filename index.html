@@ -120,7 +120,6 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 #toast.on{opacity:1}
 @media(max-width:1024px){.mods{grid-template-columns:repeat(2,1fr)}.stats{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:750px){
-  .mods{grid-template-columns:1fr}
   .inner{padding:14px 10px}
   .mods-wrap{padding:14px 10px}
   .hero{padding:18px 14px 24px}
@@ -148,6 +147,29 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
   .rh{margin-bottom:12px}
   .tw{border-radius:8px}
 }
+/* ===== FORCE MOBILE - APK / Android WebView ===== */
+html.force-mobile .mods{grid-template-columns:1fr !important}
+html.force-mobile .inner{padding:14px 10px !important}
+html.force-mobile .mods-wrap{padding:14px 10px !important}
+html.force-mobile .hero{padding:18px 14px 24px !important}
+html.force-mobile .stats{grid-template-columns:repeat(2,1fr) !important}
+html.force-mobile .stat{padding:12px 8px !important}
+html.force-mobile header{height:60px !important;padding:0 12px !important}
+html.force-mobile .logo{width:46px !important;height:46px !important}
+html.force-mobile .hdiv{display:none !important}
+html.force-mobile nav{display:none !important}
+html.force-mobile .mod{padding:16px 14px !important;gap:10px !important}
+html.force-mobile .mod-ic{width:40px !important;height:40px !important;font-size:1.25rem !important}
+html.force-mobile .mod-name{font-size:.88rem !important}
+html.force-mobile .mod-desc{font-size:.74rem !important}
+html.force-mobile .ptitle{font-size:1.1rem !important}
+html.force-mobile table{font-size:.82rem !important}
+html.force-mobile th{padding:9px 10px !important;font-size:.78rem !important}
+html.force-mobile td{padding:8px 10px !important}
+html.force-mobile .btn{padding:8px 14px !important;font-size:.82rem !important}
+html.force-mobile body{padding-bottom:64px !important}
+html.force-mobile .bottom-nav{display:flex !important;position:fixed;bottom:0;left:0;right:0;height:64px;background:linear-gradient(135deg,#0f2347,#1a3a6b);border-top:1px solid rgba(255,255,255,.15);z-index:200;align-items:center;justify-content:space-around;box-shadow:0 -2px 12px rgba(0,0,0,.25);padding:0 4px;padding-bottom:env(safe-area-inset-bottom,0px)}
+/* ================================================= */
 @media(max-width:480px){
   .nb .nb-lbl{display:none}
   .nb{padding:7px 9px;font-size:1rem}
@@ -391,6 +413,20 @@ input[type=date]:focus,input[type=month]:focus{outline:none;border-color:var(--n
 <div class="mb" id="ms"><div class="md"><button class="mc" id="btn-cm">✕</button><div class="md-title"><span>👤</span><span id="mt">הוסף תלמיד</span></div><input type="hidden" id="sid"><label>שם מלא *</label><input type="text" id="sn" placeholder="ישראל ישראלי"><label>שיעור</label><input type="text" id="sc" placeholder="שיעור א'"><label>טלפון הורה</label><input type="tel" id="sp"><label>הערות</label><input type="text" id="snotes"><div class="ma"><button class="btn out" id="btn-cancel">ביטול</button><button class="btn" id="btn-save-st">💾 שמור</button></div></div></div>
 <div id="toast"></div>
 <script>
+// ===== זיהוי APK (WebView) וכפיית מובייל =====
+(function(){
+  var ua = navigator.userAgent || '';
+  // WebView של Android מזוהה ע"י "wv" בUA, או APK שלנו
+  var isWebView = /wv|WebView/.test(ua) || (ua.indexOf('Android') !== -1 && ua.indexOf('Version/') === -1 && ua.indexOf('Chrome/') !== -1 && ua.indexOf('Mobile') !== -1);
+  // גם: אם Android + מסך קטן מ-900px - כפה מובייל
+  var isAndroid = /Android/.test(ua);
+  var smallScreen = window.screen && window.screen.width < 900;
+  if (isWebView || (isAndroid && smallScreen)) {
+    // הוסף class למובייל על body
+    document.documentElement.classList.add('force-mobile');
+  }
+})();
+// ===================================================
 window.DAYS_HEB=["","א׳","ב׳","ג׳","ד׳","ה׳","ו׳","ז׳","ח׳","ט׳","י׳","י״א","י״ב","י״ג","י״ד","ט״ו","ט״ז","י״ז","י״ח","י״ט","כ׳","כ״א","כ״ב","כ״ג","כ״ד","כ״ה","כ״ו","כ״ז","כ״ח","כ״ט","ל׳"];
 window.MONTHS_HEB=["תשרי","חשון","כסלו","טבת","שבט","אדר","ניסן","אייר","סיון","תמוז","אב","אלול"];
 function hebrewDate(jsDate){jsDate=jsDate||new Date();var y=jsDate.getFullYear(),mo=jsDate.getMonth()+1,dy=jsDate.getDate();var td=new Date(y,mo-1,dy);var ST=[{jd:new Date(2024,9,3),hy:5785,ml:[30,29,30,29,30,29,30,30,29,30,29,30]},{jd:new Date(2025,8,22),hy:5786,ml:[30,30,30,29,30,29,30,30,29,30,29,30]},{jd:new Date(2026,8,11),hy:5787,ml:[30,29,30,29,30,30,30,29,30,30,29,30]},{jd:new Date(2027,9,2),hy:5788,ml:[30,29,30,29,30,29,30,30,29,30,30,30]}];var base=ST[0];for(var i=ST.length-1;i>=0;i--){if(td>=ST[i].jd){base=ST[i];break;}}var diff=Math.round((td-base.jd)/86400000),cum=0;for(var mi=0;mi<base.ml.length;mi++){if(diff<cum+base.ml[mi]){var d=diff-cum+1;var ymap={5785:"ה׳תשפ״ה",5786:"ה׳תשפ״ו",5787:"ה׳תשפ״ז",5788:"ה׳תשפ״ח"};var wdays=["אחד","שני","שלישי","רביעי","חמישי","ששי","שבת"];return "יום "+wdays[jsDate.getDay()]+", "+window.DAYS_HEB[d]+" "+window.MONTHS_HEB[mi]+" "+(ymap[base.hy]||base.hy);}cum+=base.ml[mi];}return "";}
