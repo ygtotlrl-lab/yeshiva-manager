@@ -36,6 +36,16 @@
 - polling כל 3 שניות | סנכרון דו-כיווני
 
 **APK:** `/tmp/yoman-avoda/yoman-avoda.apk` | alias=app | storepass/keypass=pass1234
+**keystore:** `/tmp/yoman.keystore` | alias=app | storepass/keypass=pass1234
+
+**אייקון APK:** לוגו ירוק על רקע לבן — קובץ מקור: `גרין_מיט_ווייסן_הינטערגרונט.png`
+- מוחלף ישירות ב-mipmap בתוך ה-APK באמצעות zipfile (ללא apktool recompile)
+- גדלים: hdpi=72, xhdpi=96, xxhdpi=144, xxxhdpi=192
+
+**כפתורים מוסתרים במובייל (≤800px):**
+- טאב יומן: כפתורי "טקסט", "PDF", "JPEG" — class `hide-mobile`
+- טאב ארכיון: כפתור "PDF" — class `hide-mobile`
+- CSS: `@media(max-width:800px){.hide-mobile{display:none !important;}}`
 
 **git push:**
 ```
@@ -73,6 +83,12 @@ git push https://TOKEN@github.com/ygtotlrl-lab/yoman-avoda.git main
 
 **keystore:** `/tmp/yeshiva.keystore` | alias=yeshiva | storepass/keypass=yeshiva123
 
+**אייקון APK:** לוגו כחול על רקע לבן — קובץ מקור: `טונקל_בלוי_מיט_ווייסן_הינטערגרונט.png`
+- מוחלף ישירות ב-mipmap בתוך ה-APK באמצעות zipfile (ללא apktool recompile)
+- גדלים: hdpi=72, xhdpi=96, xxhdpi=144, xxxhdpi=192
+
+**manifest.json:** מצביע על `icon-192.png` ו-`icon-512.png` (תוקן — היה מצביע על logo.jpg שלא קיים)
+
 **git push:**
 ```
 git push https://TOKEN@github.com/ygtotlrl-lab/yeshiva-manager.git main
@@ -92,7 +108,53 @@ git push https://TOKEN@github.com/ygtotlrl-lab/yeshiva-manager.git main
 
 ---
 
-## תהליך בניית APK — ניהול ישיבה
+## תהליך עדכון אייקון APK ✅ (שיטה שעובדת)
+**לא להשתמש ב-apktool recompile** — משנה את manifest ושובר את ה-APK.
+במקום זאת — החלפה ישירה של PNG בתוך ה-ZIP:
+
+```python
+from PIL import Image
+import zipfile, io
+
+def png_bytes(img, size):
+    resized = img.resize((size, size), Image.LANCZOS)
+    bg = Image.new("RGB", (size, size), (255, 255, 255))
+    bg.paste(resized, mask=resized.split()[3] if resized.mode=="RGBA" else None)
+    buf = io.BytesIO()
+    bg.save(buf, "PNG")
+    return buf.getvalue()
+
+mipmap_sizes = {
+    "res/mipmap-hdpi-v4/ic_launcher.png":    72,
+    "res/mipmap-xhdpi-v4/ic_launcher.png":   96,
+    "res/mipmap-xxhdpi-v4/ic_launcher.png":  144,
+    "res/mipmap-xxxhdpi-v4/ic_launcher.png": 192,
+}
+
+logo = Image.open("logo.png").convert("RGBA")
+with zipfile.ZipFile("original.apk", 'r') as zin:
+    with zipfile.ZipFile("patched.apk", 'w', zipfile.ZIP_DEFLATED) as zout:
+        for item in zin.infolist():
+            data = zin.read(item.filename)
+            if item.filename in mipmap_sizes:
+                data = png_bytes(logo, mipmap_sizes[item.filename])
+            zout.writestr(item, data)
+
+# לאחר מכן:
+zipalign -f 4 patched.apk aligned.apk
+apksigner sign --ks keystore.keystore --ks-key-alias ALIAS \
+  --ks-pass pass:PASS --key-pass pass:PASS \
+  --out final.apk aligned.apk
+rm -f final.apk.idsig
+```
+
+**keystores:**
+- יומן עבודה: `/tmp/yoman.keystore` | alias=app | pass=pass1234
+- ניהול ישיבה: `/tmp/yeshiva.keystore` | alias=yeshiva | pass=yeshiva123
+
+---
+
+## תהליך בניית APK — ניהול ישיבה (smali — לשינויים גדולים)
 ```bash
 apktool b /tmp/ys_work -o /tmp/ys_built.apk
 zipalign -f 4 /tmp/ys_built.apk /tmp/ys_aligned.apk
@@ -115,6 +177,7 @@ rm -f /mnt/user-data/outputs/yeshiva-manager.apk.idsig
 6. breakpoint מובייל: ≤800px
 7. Samsung Galaxy A9 = 768px → דסקטופ ✓
 8. git config: user.email "dev@yeshiva.com" / user.name "Dev"
+9. **עדכון אייקון APK — שיטת zipfile בלבד, לא apktool recompile**
 
 ---
 
