@@ -1138,37 +1138,67 @@ function scheduleYsPush() {
 }
 // ============ END CLOUD SYNC ============
 
-// ============ AUTH SETUP ============
-// יצירת משתמש admin ראשוני אם הטבלה ריקה
+// ============ DB AUTO-SETUP ============
+// Supabase service role key נדרש ליצירת טבלאות - עושים זאת דרך insert עם fallback
+
 async function ensureFirstAdmin() {
   try {
+    // נסה לקרוא מהטבלה
     var {data, error} = await SB.from('ys_users').select('id').limit(1);
-    if (error) {
-      // טבלה לא קיימת - נציג הוראות
-      console.warn('ys_users table missing. Run SQL setup.');
-      document.getElementById('auth-err').textContent = 'נא ליצור את טבלת המשתמשים — ראה הוראות בקונסול';
+
+    if (error && error.code === '42P01') {
+      // טבלה לא קיימת - הצג הוראות חד-פעמיות במסך הכניסה
+      showSetupScreen();
       return;
     }
-    if (!data || data.length === 0) {
-      // טבלה ריקה - צור admin ראשוני
+
+    if (!error && (!data || data.length === 0)) {
+      // טבלה קיימת אבל ריקה - צור admin ראשוני
+      var hash = simpleHash('123456');
       var {error: insErr} = await SB.from('ys_users').insert({
         username: 'admin',
-        password_hash: simpleHash('123456'),
+        password_hash: hash,
         full_name: 'מנהל ראשי',
         role: 'admin',
         active: true
       });
       if (!insErr) {
-        console.log('✅ Admin user created: admin / 123456');
-        document.getElementById('auth-err').textContent = '✅ משתמש ראשוני נוצר: admin / 123456';
+        document.getElementById('auth-err').textContent = 'משתמש נוצר: admin / 123456';
+        document.getElementById('auth-err').style.color = '#38a169';
       }
     }
   } catch(e) {
-    console.error('ensureFirstAdmin error:', e);
+    console.error('setup error:', e);
   }
 }
+
+function showSetupScreen() {
+  // הצג הוראות SQL חד-פעמיות במסך הכניסה
+  var authBox = document.querySelector('.auth-box');
+  authBox.innerHTML = `
+    <div style="font-size:1.5rem;margin-bottom:8px">⚙️</div>
+    <div style="font-size:1rem;font-weight:700;color:#1a3a6b;margin-bottom:8px">הגדרה ראשונית</div>
+    <div style="font-size:.78rem;color:#4a5568;margin-bottom:12px;text-align:right">
+      יש להריץ את ה-SQL הבא פעם אחת ב-<a href="https://supabase.com/dashboard/project/kxbtskqobynewvnckaaz/sql" target="_blank" style="color:#1a3a6b">Supabase SQL Editor</a>:
+    </div>
+    <textarea readonly style="width:100%;height:200px;font-size:.65rem;direction:ltr;text-align:left;border:1px solid #d8e2f0;border-radius:8px;padding:8px;font-family:monospace;resize:none;background:#f8faff">create table if not exists ys_users (
+  id bigint generated always as identity primary key,
+  username text unique not null,
+  password_hash text not null,
+  full_name text not null,
+  role text not null check (role in ('admin','senior','junior')),
+  active boolean default true,
+  created_at timestamptz default now()
+);
+alter table ys_users enable row level security;
+create policy "allow_all" on ys_users using (true) with check (true);</textarea>
+    <button class="auth-btn" style="margin-top:10px" onclick="location.reload()">🔄 רענן אחרי הרצת ה-SQL</button>
+    <div style="font-size:.75rem;color:#8a97b0;margin-top:8px">לאחר הרצת ה-SQL, הרענן והמערכת תיצור משתמש admin/123456</div>
+  `;
+}
+
 ensureFirstAdmin();
-// ============ END AUTH SETUP ============
+// ============ END DB AUTO-SETUP ============
 
 // ============ STUDENTS MODULE ============
 // ADMIN_PASS ו-isLoggedIn הוסרו - מוחלף במערכת auth
