@@ -4789,6 +4789,16 @@ function idEq(a, b) {
 function idArg(v) {
   return "'" + String(v == null ? '' : v).replace(/[^A-Za-z0-9_-]/g, '') + "'";
 }
+// ⛔ **נקודת המעבר האחת בין מזהה למספר** — ⚠️ והיא אינה השוואת זהות: ⭐ היא
+//    מחלצת **חותמת שנשמרה בשדה המזהה בגרסה ישנה**, מהתקופה שבה המזהה היה
+//    `Date.now()`. ⛔ ומחרוזת שאינה ספרות בלבד מחזירה 0 ⛔ ולא `NaN` —
+//    ⚠️ `NaN` בהשוואה נכשל בשקט, ⭐ ואפס הוא «אין חותמת» מוצהר.
+// ⛔ אין להמיר מזהה למספר בשום מקום אחר — הוא `text`, ⛔ ו-`parseInt` עליו
+//    מחזיר `NaN`: ⚠️ ההשוואה נכשלת בלי שאיש רואה.
+function legacyIdStamp(v) {
+  var s = String(v == null ? '' : v);
+  return /^[0-9]+$/.test(s) ? Number(s) : 0;
+}
 /* ═══════════════ סוף מודול מזהי הרשומות ════════════════════════════════ */
 
 /* ── RTY_CFG — הדבר היחיד שנבדל בין האפליקציות ──────────────────────────── */
@@ -6322,9 +6332,14 @@ function _randDeviceId() {
 // הוא נכתב. ⛔ אין לשכפל אותה (סבב 38) — ר' הנימוק שבראש הבלוק.
 // `isPend` הוא הסימון ⏳ של הרשומה המקומית; `mergePair`, כשהוא קיים, מקבל
 // את ההכרעה כפרמטר ומרחיב אותה (מיזוג פנימי של סנאפשוט).
+// ⛔ **⏳ שובר שוויון ⛔ ואינו גובר על חותמת חדשה יותר** — ⚠️ מכשיר א׳ ערך
+//    ב-08:00 ולא הספיק לדחוף, ב׳ ערך ב-10:00 וסנכרן, וא׳ עלה ב-14:00:
+//    ⭐ ⏳ שמנצח תמיד היה מוחק כאן את עריכת ה-10:00. ⛔ והמקרה שבו ⏳ באמת
+//    נחוץ — רשומה שאינה בענן כלל — מטופל במסלול «מפתח שאינו בענן».
 function _mergePick(loc, rem, k, isPend, tsOf, mergePair) {
   if (mergePair) return mergePair(loc, rem, k, isPend);
-  return (isPend || tsOf(loc) > tsOf(rem)) ? loc : rem;   // שוויון → הענן
+  return tsOf(loc) > tsOf(rem) ? loc
+       : (tsOf(loc) === tsOf(rem) && isPend ? loc : rem);   // שוויון → ⏳, אחרת הענן
 }
 // `opts`: getKey · ts · isPending · mergePair · keepUnversionedLocal · onDrop
 //         ובנוסף ארבע ידיות המדיניות שבראש הבלוק.
@@ -6627,6 +6642,28 @@ function toast(msg, dur, kind) {
 var LS_TOAST_MS = 5000;
 function lsToast(msg, dur) { try { toast(msg, dur || LS_TOAST_MS, LS_TOAST.kind); } catch (e) {} }
 /* ═══════════════ סוף מודול שכבת המודאל ═════════════════════════════════ */
+/* ═══ קריאת ערך מספרי — מודול משותף (סבב 104) ═════════════════════════════
+   ⛔ שינוי כאן — ארבע האפליקציות **וארבעת עותקי השער**, באותו סבב: אחרת
+      החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
+   ⛔ **כל קריאת ערך מספרי משדה עוברת כאן** — ⚠️ המרה ישירה מחזירה `NaN`
+      על שדה ריק, ⭐ ו-`NaN` שנכנס להשוואה נכשל בשקט: ⛔ `!val` תופס גם
+      אפס תקין, ⚠️ ו-`val > 30` על `NaN` הוא `false`.
+   ⛔ **והברירה מוצהרת בקריאה** — ⚠️ ולא נגזרת בשקט מהטיפוס: ⭐ מי שקורא
+      רואה מה הוא מקבל על שדה ריק, ⛔ ואינו מגלה זאת מהתנהגות.
+   ⛔ **והקלט הוא האלמנט** ⛔ ולא ערכו — ⚠️ אלמנט חסר הוא מסלול תקף, ⭐ והוא
+      מחזיר את הברירה: ⛔ קורא שמפרק בעצמו `el.value` מקבל `undefined`
+      ונופל לפני שהגיע לכאן.
+   ═══════════════════════════════════════════════════════════════════════ */
+function readNum(inp, dflt) {
+  var d = (dflt === undefined) ? 0 : dflt;
+  if (!inp) return d;
+  var raw = String(inp.value == null ? '' : inp.value).trim();
+  if (raw === '') return d;
+  var n = Number(raw);
+  return isFinite(n) ? n : d;
+}
+/* ═══════════════ סוף מודול קריאת ערך מספרי ══════════════════════════════ */
+
 /* ═══ כיווץ רשימת ערכים — מודול משותף (סבב 101) ═══════════════════════════
    ⛔ שני פריטים באותו ערך הם פריט אחד — ⚠️ **והכיווץ הוא בכתיבה ובמיזוג
       כאחד**: ⭐ `uniqHas` מונעת את הכפילות שמכאן ואילך, ⛔ ו-`uniqList`
@@ -8824,7 +8861,7 @@ window.atApplyMark = function(sid, code) {
 window.atConfirmLate = function(sid) {
   var s=String(sid);
   var inp=document.getElementById('at-min-'+sid);
-  var val=inp?parseInt(inp.value):0;
+  var val=readNum(inp, 0);
   if(!val||val<=0){toast('⚠️ יש להזין מספר דקות');return;}
   if(val>30){toast('⚠️ מעל 30 דקות איחור יש לסמן כחיסור');return;}
   window.atSetLateMin(sid,val);
@@ -10289,7 +10326,7 @@ window.slApplyMark = function(sid, code) {
 window.slConfirmLate = function(sid) {
   var s=String(sid);
   var inp=document.getElementById('sl-min-'+sid);
-  var val=inp?parseInt(inp.value):0;
+  var val=readNum(inp, 0);
   if(!val||val<=0){toast('⚠️ יש להזין מספר דקות');return;}
   if(val>30){toast('⚠️ מעל 30 דקות איחור יש לסמן כחיסור');return;}
   window.slSetLateMin(sid,val);
