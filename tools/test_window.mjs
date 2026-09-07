@@ -46,15 +46,29 @@ const assert = (c, m) => (c ? ok(m) : bad(m));
 /* ── חילוץ: לוח התאריכים העברי + עוזרי החלון ───────────────────────────── */
 const L = SRC.split('\n');
 const calFrom = L.findIndex((l) => l.startsWith('window.DAYS_HEB='));
-const calTo = L.findIndex((l, i) => i > calFrom && l.startsWith('window.ysHebDate=function'));
-let calEnd = -1;
-for (let i = calTo; i < L.length; i++) { if (L[i] === '};') { calEnd = i; break; } }
+/*  ⛔ העוגן הוא סמן סוף מוצהר ⛔ ולא שם פונקציה (סבב 107) — ⚠️ המנוע יצא
+ *  לבלוק חתום, ⭐ ועוגן שנמתח עד שמו בלע את כל מה שביניהם. */
+const calEnd = L.findIndex((l, i) => i > calFrom && l.startsWith('// ═══ סוף אזור התאריך העברי'));
+const calTo = calFrom;
 const winFrom = L.findIndex((l) => l.includes('חלון החודש העברי — עוזר פרטי'));
 let winEnd = -1;
 for (let i = winFrom; i < L.length; i++) { if (L[i].startsWith('/* ── HW_CFG')) { winEnd = i - 1; break; } }
 assert(calFrom >= 0 && calEnd > calTo, 'לוח התאריכים העברי אותר ב-index.html');
+/*  ⛔ המנוע יצא לבלוק חתום (סבב 107) — ⚠️ ולכן האזור הוא **שניים**: שכבת
+ *  התצוגה שעד סמן הסוף המוצהר, ⛔ והבלוק החתום שמחזיק את המנוע עצמו:
+ *  ⭐ עוגן אחד שנמתח מזה לזה היה בולע את כל מה שביניהם ⛔ ומריץ חצי
+ *  אפליקציה ב-`vm`. */
+const engFrom = L.findIndex((l) => l.startsWith('/* ═══ מנוע התאריך העברי — מודול משותף'));
+const engTo = L.findIndex((l, i) => i > engFrom && l.startsWith('/* ═══════════════ סוף מודול מנוע התאריך העברי'));
+assert(engFrom >= 0 && engTo > engFrom, 'הבלוק החתום של מנוע התאריך אותר ב-index.html');
+const ENG = L.slice(engFrom, engTo + 1).join('\n');
+
 assert(winFrom >= 0 && winEnd > winFrom, 'בלוק חלון החודש העברי אותר ב-index.html');
-const CAL = L.slice(calFrom, calEnd + 1).join('\n');
+/*  ⛔ הבלוק מצורף פעם אחת ⛔ ולא פעמיים (סבב 107) — ⚠️ באחת האפליקציות הוא
+ *  יושב **בתוך** האזור ובאחרת מחוצה לו: ⭐ צירוף עיוור היה מגדיר את המנוע
+ *  פעמיים, ⛔ וההגדרה השנייה הייתה מבטלת כל מוטציה שנעשתה בראשונה. */
+const REG = L.slice(calFrom, calEnd + 1).join('\n');
+const CAL = REG.includes(ENG) ? REG : REG + '\n' + ENG;
 const WIN = L.slice(winFrom, winEnd + 1).join('\n');
 
 /*  שעון מזויף: `new Date()` ללא ארגומנטים מחזיר את היום שהתרחיש קבע,
