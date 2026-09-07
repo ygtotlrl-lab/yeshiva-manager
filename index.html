@@ -1551,6 +1551,7 @@ async function _doLoginInner() {
   var onlineUser = (onlineVerdict === 'ok') ? onlineRow : null;
 
   if (onlineUser) {
+    ctxSwitch();
     AUTH.user = onlineUser;
     AUTH.offlineLogin = false;
     ysLoginLog('login_ok', 'online', ysLoginDetails(username));
@@ -1608,6 +1609,7 @@ async function _doLoginInner() {
       showErr('❌ ' + MSG_BAD_LOGIN); return;
     }
     var lu = cu;
+    ctxSwitch();
     AUTH.user = lu;
     AUTH.offlineLogin = true;
     ysUsersCacheSave(lu);   // מנקה `password_hash` שנשאר ממטמון ישן גם באופליין
@@ -1643,6 +1645,7 @@ async function _doLoginInner() {
 
 // ---- יציאה ----
 function doLogout() {
+  ctxSwitch();
   AUTH.user = null;
   lkStop();
   document.getElementById('auth-screen').classList.remove('hidden');
@@ -2097,6 +2100,7 @@ async function confirmSwitch() {
     ysUsersCacheSave(u);
   }
   closeModal();
+  ctxSwitch();
   AUTH.user=u;
   // ⚠️ **אחרי** ‎AUTH.user=u‎ ולא לפניו — ר' ההערה בענף האונליין למעלה.
   // הרענון המלא (סבב 22) מושך את כל המשתמשים הפעילים; באופליין אין רשת
@@ -5006,6 +5010,30 @@ var PL_CFG = {
       }, function () { return { ok: false, ts: null }; });
   },
 };
+/* ═══ שומר ההקשר — מודול משותף (סבב 109) ══════════════════════════════════
+   ⛔ שינוי כאן — ארבע האפליקציות **וארבעת עותקי השער**, באותו סבב: ⚠️ אחרת
+      החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
+   ⛔ מחזור «קרא ← מזג ← דחוף» נפתח בהקשר אחד ⛔ ואינו רשאי לכתוב באחר —
+      ⚠️ בין ה-`await` הראשון לאחרון ההקשר יכול להתחלף, ⭐ ומאותו רגע
+      הגלובלים מצביעים על החדש והזיכרון עדיין מחזיק את הישן: ⛔ כל כתיבה
+      שאחריו כותבת את נתוני ההקשר הקודם תחת החדש, ⚠️ וכל רישום הצלחה נזקף
+      לחשבון הלא נכון — ⭐ ועֵד פינוי כזה מתיר למחוק מהדיסק רשומה שמעולם
+      לא עלתה.
+   ⛔ **המונה ⛔ ולא שם ההקשר** — ⚠️ החלפה הלוך-ושוב מחזירה את אותו שם,
+      ⭐ והזיכרון בינתיים כבר הוחלף: ⛔ שוויון שמות אינו שוויון הקשר.
+   ⛔ **ומה נלכד מוצהר פר-אפליקציה** ⛔ ואינו כאן — ⚠️ באפליקציה רב-מוסדית
+      זה המוסד, ⭐ ובשאר המשתמש המחובר: ⛔ המנגנון אחד ⚠️ והנלכד נבדל.
+   ═══════════════════════════════════════════════════════════════════════ */
+var _ctxEpoch = 0;
+function ctxEpoch() { return _ctxEpoch; }
+/*  ⛔ נקודת הקידום היחידה — ⚠️ כל מסלול שמחליף הקשר קורא לה **לפני**
+ *  הטעינה החדשה: ⭐ קידום שאחרי הטעינה משאיר את המחזור שרץ עכשיו סבור
+ *  שהוא עדיין בהקשר שלו, ⛔ והכתיבה שלו נזקפת לחשבון החדש. */
+function ctxSwitch() { _ctxEpoch++; return _ctxEpoch; }
+/*  ⛔ «האם ההקשר התחלף מאז שהתחלתי» — ⚠️ הקורא לוכד את הערך בכניסה
+ *  ⛔ ומוסר אותו כאן, ⭐ ואינו קורא את הגלובלי פעמיים. */
+function ctxStale(ep) { return ep !== _ctxEpoch; }
+/* ═══════════════ סוף שומר ההקשר ═════════════════════════════════════════ */
 /* ═══ מנגנון המשיכה — מודול משותף (סבב 51) ════════════════════════════════
    ⛔ שינוי כאן (סבב 65) — ארבע האפליקציות **וארבעת עותקי השער**, באותו
       סבב: אחרת החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשלושה.
@@ -5093,17 +5121,20 @@ function plBoot() {
    ⚠️ הסדרים לפני המצבה — ⛔ הסימון מפנה לתלמיד, ⭐ והמצבה היא מה שהוא
    מצביע אליו. */
 var PUSH_TABLES = ['ys_attend_sessions', 'ys_sleep_sessions', 'ys_students'];
+/*  ⛔ ההקשר שנלכד לפני ההמתנה הראשונה — ⚠️ `mark` רץ אחרי `await`, ⭐ וקריאת
+ *  הגלובלי בו הייתה זוקפת את הצלחת הדחיפה של משתמש אחד לחשבון השני. */
+var _ysPushEp = 0;
 var PUSH_CFG = {
   tables: PUSH_TABLES,
   chunk:  500,
   delay:  400,
-  dirty:  function (t, ctx) { return ysPushDirty(t, ctx); },
+  dirty:  function (t, ctx) { _ysPushEp = ctxEpoch(); return ysPushDirty(t, ctx); },
   key:    function (t, row) {
     var c = YS_ROWS_KINDS[YS_ROWS_READ_KEYS[t]];
     return (c && row && row.id != null) ? (c.pk + row.id) : null;
   },
   send:   function (t, rows) { return ysSendRecs(t, rows); },
-  mark:   function (t) { _ysMarkPushed(t); },
+  mark:   function (t) { if (!ctxStale(_ysPushEp)) _ysMarkPushed(t); },
   run:    function () { ysPushToCloud(); },
 };
 /* ═══ שכבת הדחיפה — מודול משותף (סבב 102) ═════════════════════════════════
@@ -6852,13 +6883,19 @@ var _ysPushWarned = false;
 async function ysPushToCloud() {
   var ts = Date.now();
   var failed = [], pushed = 0, kvMissing = false;
+  /*  ⛔ ההקשר נלכד בכניסה ⛔ ונבדק אחרי כל המתנה — ⚠️ המחזור פותח כמה
+   *  הלוך-ושוב לרשת, ⭐ והמשתמש יכול להתחלף באמצע: ⛔ כל כתיבה שאחריו
+   *  כותבת את מה שנמזג עבור הקודם, ⚠️ וכל רישום הצלחה נזקף לחדש. */
+  var _ep = ctxEpoch();
 
   // כל קטגוריה עומדת בפני עצמה. קודם היה try אחד גדול סביב הכול, ולכן ערך
   // localStorage פגום אחד זרק ועצר את הדחיפה לפני שנכתב *שום* מפתח —
   // תלמידים, אישורים והגדרות הפסיקו להסתנכרן בשקט.
   async function step(label, fn) {
+    if (ctxStale(_ep)) return;
     try {
       var r = await fn();
+      if (ctxStale(_ep)) return;
       if (r && r.error) {
         failed.push(label);
         var m = r.error.message || r.error.code || '';
@@ -6885,8 +6922,10 @@ async function ysPushToCloud() {
     var remoteSt = null; try { remoteSt = await ysCloudGet('ys_students'); } catch(e1) {}
     var mergedSt = ysMergeWithDropLog(localSt, remoteSt, function(r){ return r.id; }, false, 'ys_students',
                                       ysStudentPair);
+    if (ctxStale(_ep)) return {};
     _ysStudentsSaveRaw(mergedSt);
     var r = await pushTable('ys_students', mergedSt);
+    if (ctxStale(_ep)) return {};
     if (r && r.ok) pendConfirmPush(PK_STUDENT, _t0);
     else if (mergedSt.length) { _ysQueueAdd('ys_students', mergedSt); ysUpdateQueueBadge(); }
     ysSyncLog('push', 'ys_students', ysCount(mergedSt), {local_count: ysCount(localSt), remote_count: ysCount(remoteSt), result_count: ysCount(mergedSt)});
@@ -6905,6 +6944,7 @@ async function ysPushToCloud() {
     var localAp = getApprovals();
     var remoteAp = null; try { remoteAp = await ysCfgGet('ys_approvals'); } catch(e3) {}
     var mergedAp = ysMergeRecords(localAp, remoteAp, null, true);
+    if (ctxStale(_ep)) return {};
     lsSet('ys_approvals', JSON.stringify(mergedAp));
     var r = await ysCfgSet('ys_approvals', mergedAp);
     ysSyncLog('push', 'ys_approvals', ysCount(mergedAp), {local_count: ysCount(localAp), remote_count: ysCount(remoteAp), result_count: ysCount(mergedAp)});
@@ -6935,6 +6975,7 @@ async function ysPushToCloud() {
         catch (e6) { lastErr = {message: e6 && e6.message}; }
       }
     }
+    if (ctxStale(_ep)) return {};
     lsSet('ys_settings_meta', JSON.stringify(meta));
     /* ⛔ המפה אינה עולה לענן (סבב 63) — מפה שנכתבת לצד `updated_at` היא
        מקור אמת שני, וזה בדיוק מה שיש להסיר
@@ -6946,8 +6987,9 @@ async function ysPushToCloud() {
 
   // חותמת הזמן מתקדמת רק אם משהו באמת עלה — אחרת מכשירים אחרים היו מושכים
   // "שינוי" שלא קיים בענן
-  if (pushed > 0) {
+  if (pushed > 0 && !ctxStale(_ep)) {
     await ysCfgSet('ys_last_changed', ts);
+    if (ctxStale(_ep)) return;
     _ysLastTs = ts;
     console.log('[ys-sync] pushed (merged) ts=' + ts + (failed.length ? ' | נכשלו: ' + failed.join(', ') : ''));
   }
@@ -6968,6 +7010,10 @@ async function ysPushToCloud() {
 }
 
 async function ysPullFromCloud() {
+  /*  ⛔ ההקשר נלכד בכניסה ⛔ ונבדק לפני כל כתיבה מקומית — ⚠️ המחזור מושך,
+   *  ממזג וכותב לדיסק, ⭐ והמשתמש יכול להתחלף בין המשיכה לכתיבה: ⛔ מה
+   *  שנמזג עבור הקודם היה יורד לדיסק אחרי שהחדש כבר נכנס. */
+  var _ep = ctxEpoch();
   try {
     /* ⭐ מטא הגדרות מהענן — החותמת המרוחקת להכרעת ה-LWW על שלושת מפתחות
        ההגדרות הקטנים, ומסבב 63 היא נקראת מ-`updated_at` של השורה.
@@ -6988,6 +7034,7 @@ async function ysPullFromCloud() {
 
     // students: מיזוג ברמת רשומה במקום דריסה — מכשיר לא מוחק מה שהוא לא מכיר
     var s = await ysCloudGet('ys_students');
+    if (ctxStale(_ep)) return;
     if (s !== null && Array.isArray(s)) {
       var pullMigrated = false;
       s.forEach(function(x) { if (_migrateStudentLegacy(x)) pullMigrated = true; });
@@ -6997,6 +7044,7 @@ async function ysPullFromCloud() {
     }
     // approvals: מיזוג לפי sid עם updatedAt
     var ap = await ysCfgGet('ys_approvals');
+    if (ctxStale(_ep)) return;
     if (ap && typeof ap === 'object') {
       lsSet('ys_approvals', JSON.stringify(ysMergeRecords(getApprovals(), ap, null, true)));
     }
@@ -7010,6 +7058,7 @@ async function ysPullFromCloud() {
     // מיזוג מלא ברמת רשומה: מקומי + pending queue + ענן. tombstones מונעים
     // resurrection; רשומות מקומיות legacy ללא updatedAt לא מוחזרות (anti-resurrection).
     var atSess = await ysCloudGet('ys_attend_sessions');
+    if (ctxStale(_ep)) return;
     if (atSess && Array.isArray(atSess)) {
       var _atLocal = []; try { _atLocal = JSON.parse(lsGet('ys_attend_sessions') || '[]'); } catch(eAt) {}
       var _atMerge = _ysSessionsMerge(atSess, _atLocal, 'ys_attend_sessions');
@@ -7024,6 +7073,7 @@ async function ysPullFromCloud() {
     }
     // טען נתוני שינה
     var slSess = await ysCloudGet('ys_sleep_sessions');
+    if (ctxStale(_ep)) return;
     if (slSess && Array.isArray(slSess)) {
       var _slLocal2 = []; try { _slLocal2 = JSON.parse(lsGet('ys_sleep_sessions') || '[]'); } catch(eSl) {}
       var _slMerge = _ysSessionsMerge(slSess, _slLocal2, 'ys_sleep_sessions');
@@ -7059,6 +7109,7 @@ async function ysPullFromCloud() {
     // או ריקה נדחית ב-ysApplyPerms במקום לנעול את המשתמש מחוץ לכל המודולים.
     try {
       var pmV = await ysCfgGet('ys_perms');
+      if (ctxStale(_ep)) return;
       if (pmV && typeof pmV === 'object' && !Array.isArray(pmV) && Object.keys(pmV).length) {
         if (ysApplyPerms(pmV)) console.log('[perms] עודכנו מהענן בזמן אמת');
       }

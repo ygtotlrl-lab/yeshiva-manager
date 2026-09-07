@@ -120,6 +120,10 @@ const CODE = VARS.map(grabVar).join(';\n') + ';\n' +
 
 /* ── סביבה מדומה ───────────────────────────────────────────────────────── */
 let LS, DOM, SBLOG, TOASTS, LOGINLOG;
+/*  ⛔ שומר ההקשר ברתמה הוא **מונה אמיתי** ⛔ ולא stub — ⚠️ stub שמחזיר
+ *  קבוע אינו יכול להתחלף, ⭐ ובדיקה שמדמה החלפת משתמש באמצע מחזור לא
+ *  הייתה יכולה להיכשל: ⛔ וזה בדיוק «probe שאינו יכול להיכשל». */
+const CTX = { n: 0 };
 
 function mkEl(id) {
   return { id, value: '', textContent: '', type: 'text', disabled: false,
@@ -200,7 +204,7 @@ function makeSB(state) {
 }
 
 function boot(state, opts = {}) {
-  LS = {}; SBLOG = []; TOASTS = []; LOGINLOG = [];
+  LS = {}; SBLOG = []; TOASTS = []; LOGINLOG = []; CTX.n = 0;
   DOM = freshDom(DOM_IDS);
   Object.assign(DOM._m, opts.domSeed || {});
   const sandbox = {
@@ -229,6 +233,9 @@ function boot(state, opts = {}) {
     loadPerms: async () => {},
     showPage: () => {},
     lkReset: () => {},   // סבב 52 — המנגנון עבר לליבה המשותפת
+    ctxEpoch: () => CTX.n,
+    ctxSwitch: () => { CTX.n++; return CTX.n; },
+    ctxStale: (ep) => ep !== CTX.n,
     initDateFields: () => {},
     /*  ⛔ מסלול סגירה אחד מסבב 80 — ⚠️ שלוש פונקציות הסגירה הנפרדות ירדו
      *  עם המיכלים שלהן, ⭐ והרתמה מדמה את היחידה שנשארה. */

@@ -90,6 +90,10 @@ function harness(modSrc, opts) {
     pendClear: () => {},
     pendFailed: () => {},
     plTouch: () => {},
+    /*  ⛔ שומר ההקשר — ⚠️ הוא חי בבלוק חתום אחר, ⭐ והרתמה מספקת אותו
+     *  כדי ששכבת הדחיפה תיטען לבדה: ⛔ הקשר שאינו מתחלף בסביבת הדמה. */
+    ctxEpoch: () => 0,
+    ctxStale: () => false,
     rtyNote: () => {},
     _ysMarkPushed: () => {},
     SB: {
