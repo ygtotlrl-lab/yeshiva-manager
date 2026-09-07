@@ -482,7 +482,7 @@ header{justify-content:space-between;padding:0 14px}
   <!-- כפתור משתמש מחובר - שמאל קיצוני -->
   <div id="ys-sync-badge" style="display:none;position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:#c05621;color:#fff;border-radius:999px;padding:5px 16px;font-family:Heebo;font-size:.78rem;font-weight:700;z-index:9999;box-shadow:0 2px 10px rgba(0,0,0,.25);pointer-events:none;white-space:nowrap"></div>
   <div id="user-avatar-wrap" style="position:relative;display:none;align-items:center">
-    <button id="user-avatar-btn" data-act="user-menu-toggle" style="display:flex;align-items:center;gap:8px;padding:8px 18px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.4);border-radius:30px;cursor:pointer;font-family:Heebo;font-size:.88rem;font-weight:600;color:#fff;white-space:nowrap;backdrop-filter:blur(4px);transition:all .2s">
+    <button data-act="user-menu-toggle" style="display:flex;align-items:center;gap:8px;padding:8px 18px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.4);border-radius:30px;cursor:pointer;font-family:Heebo;font-size:.88rem;font-weight:600;color:#fff;white-space:nowrap;backdrop-filter:blur(4px);transition:all .2s">
       <span style="font-size:.95rem">👤</span>
       <span id="hdr-username"></span>
     </button>
@@ -543,7 +543,7 @@ header{justify-content:space-between;padding:0 14px}
 <div id="st-summary" style="display:flex;gap:16px;margin:10px 0;font-size:0.9em;background:var(--bg);padding:8px 14px;border-radius:8px;flex-wrap:wrap"></div>
 
 <!-- Students Table -->
-<div id="students-list-wrap">
+<div>
   <div id="students-tbody"></div>
 </div>
 
@@ -565,7 +565,7 @@ header{justify-content:space-between;padding:0 14px}
       <button id="at-tab-sup" data-act="at-tab" data-tab="sup" style="padding:8px 18px;border:none;border-bottom:3px solid transparent;background:none;font-family:Heebo;font-size:.9rem;font-weight:600;color:var(--text2);cursor:pointer;margin-bottom:-2px">📋 השגחה</button>
     </div>
     <!-- סימון «המוצג ישן» — ריק כשהרענון הצליח -->
-    <div id="at-stale" style="display:none;background:#fffaf0;border:1.5px solid #f6ad55;border-radius:var(--r);padding:8px 14px;margin-bottom:10px;font-size:.82rem;color:#975a16"></div>
+    <div id="at-pullStale" style="display:none;background:#fffaf0;border:1.5px solid #f6ad55;border-radius:var(--r);padding:8px 14px;margin-bottom:10px;font-size:.82rem;color:#975a16"></div>
     <!-- תצוגת רישום -->
     <div id="at-view-reg" style="display:none">
       <!-- שלב א׳: בחירת תאריך + ממלא + סדר -->
@@ -628,7 +628,7 @@ header{justify-content:space-between;padding:0 14px}
       <button id="sl-tab-arc" data-act="sl-tab" data-tab="arc" style="padding:8px 18px;border:none;border-bottom:3px solid transparent;background:none;font-family:Heebo;font-size:.9rem;font-weight:600;color:var(--text2);cursor:pointer;margin-bottom:-2px">📁 ארכיון</button>
       <button id="sl-tab-sup" data-act="sl-tab" data-tab="sup" style="padding:8px 18px;border:none;border-bottom:3px solid transparent;background:none;font-family:Heebo;font-size:.9rem;font-weight:600;color:var(--text2);cursor:pointer;margin-bottom:-2px">📋 השגחה</button>
     </div>
-    <div id="sl-stale" style="display:none;background:#fffaf0;border:1.5px solid #f6ad55;border-radius:var(--r);padding:8px 14px;margin-bottom:10px;font-size:.82rem;color:#975a16"></div>
+    <div id="sl-pullStale" style="display:none;background:#fffaf0;border:1.5px solid #f6ad55;border-radius:var(--r);padding:8px 14px;margin-bottom:10px;font-size:.82rem;color:#975a16"></div>
     <div id="sl-view-reg" style="display:none">
       <div id="sl-reg-picker">
         <div style="background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:18px">
@@ -4323,7 +4323,7 @@ function bkStatusHTML() {
   var t = bkLastAt(), st = bkStale();
   return '<div class="sync-line bk-line"><div>גובה לאחרונה: <b>' +
     (t ? esc(syncFmtTime(t)) : '— טרם גובה —') + '</b></div>' +
-    (st ? '<div class="bk-stale">⚠️ הגיבוי לא רץ ' + st + ' ימים</div>' : '') +
+    (st ? '<div class="bkStale">⚠️ הגיבוי לא רץ ' + st + ' ימים</div>' : '') +
     '</div>';
 }
 function bkStatusMount() {
@@ -5712,6 +5712,10 @@ async function _ysQueueSend(key, value) {
   return (r && r.ok) ? {} : { error: { message: 'rows:' + key } };
 }
 async function ysFlushQueue() {
+  /*  ⛔ ההקשר נלכד בכניסה ⛔ ונבדק אחרי כל המתנה — ⚠️ הרישום שאחרי
+   *  ה-`await` הוא מה שנזקף לחשבון ההקשר, ⭐ ומשתמש שהתחלף באמצע
+   *  היה מקבל לחשבונו את הצלחת הדחיפה של הקודם. */
+  var _ep = ctxEpoch();
   var q;
   try { q = JSON.parse(lsGet(_YS_Q_KEY) || '[]'); } catch(e) { return; }
   if (!q.length) return;
@@ -5731,9 +5735,9 @@ async function ysFlushQueue() {
         nOk++;
         // ה-t0 של פריט בתור הוא **הרגע שבו הוא נכנס אליו** — הערך שנשלח עכשיו
         // הוא הצילום מאותו רגע, ולכן הוא מאשר רק סימונים שקדמו לו.
-        pendConfirmKv(item.key, item.ts);
+        if (!ctxStale(_ep)) pendConfirmKv(item.key, item.ts);
         // עֵד הפינוי — אותה עדות בדיוק. הריקון הוא דחיפה שהצליחה.
-        _ysMarkPushed(item.key);
+        if (!ctxStale(_ep)) _ysMarkPushed(item.key);
         /* ⛔ התור נושא מפתחות הגדרות בלבד — ⚠️ הרשומות נכתבות ישירות
            לשכבת השורות, ⛔ ואינן עוברות כאן: ⭐ שכפול של מסלול הכתיבה
            הוא מנוע מיזוג שני, ⛔ והחזרתו לכאן דורסת בערך שנכנס לתור. */
@@ -5747,7 +5751,7 @@ async function ysFlushQueue() {
     // היחיד ש-`ysAutoSync` במכשירים האחרים משווה מולו, ולכן חותמת
     // שלא נכתבה משמעה שהרשומות עלו ⛔ ואיש לא יידע עליהן. הרשומות
     // עצמן כבר בענן, ולכן זו אזהרה ולא כישלון.
-    try { await _ysCfgSetRaw('ys_last_changed', ts); _ysLastTs = ts; }
+    try { await _ysCfgSetRaw('ys_last_changed', ts); if (!ctxStale(_ep)) _ysLastTs = ts; }
     catch(e){
       console.warn('[sync] חותמת ys_last_changed לא נכתבה:', e && e.message);
       try { ysSyncLog('touch_failed', null, String((e && e.message) || e)); } catch(e2){}
@@ -6420,11 +6424,13 @@ function tombPruneMerged(arr) {
 //    בכל שלוש שניות, ⚠️ וזה בדיוק מה שהדגל בא למנוע.
 function tombBoot() { _tombPrunePending = true; }
 /* ═══════════════ סוף מודול גריעת ה-tombstones ══════════════════════════ */
-/* ── LS_TOAST — הדבר היחיד שנבדל בין האפליקציות ─────────────────────────── */
-/*  ⛔ החתימה `toast(msg, dur, kind)` זהה בארבעתן (סבב 87) — ⚠️ ומה שנשאר
- *  נבדל הוא **שם המחלקה** בלבד: ⭐ המשך הוא ערך משותף שיושב בבלוק, ⛔ ולכן
- *  גוף `lsToast` זהה בית-לבית בארבעתן. */
-var LS_TOAST = { kind: '' };
+/* ── LS_TOAST — הודעת האחסון המלא ───────────────────────────────────────── */
+/*  ⛔ החתימה `toast(msg, dur, kind)` זהה בארבעתן (סבב 87) — ⚠️ **וגם שם
+ *  המחלקה**: ⭐ אחסון שהתמלא הוא אותו סיכון בארבעתן, ⛔ והודעה אדומה באחת
+ *  ושחורה בשלוש מלמדת את המשתמש ששתי המערכות אומרות שני דברים.
+ *  ⛔ **ואינו בתוך הבלוק החתום** — ⚠️ נקודת ההצהרה נבדלת בין הארבע בשורה
+ *  שלפניה, ⭐ והחתימה מודדת טקסט רצוף. */
+var LS_TOAST = { kind: 'bad' };
 /*  ⛔ הדבר היחיד שנבדל בין שלוש האפליקציות שיש בהן כניסה — ⚠️ הלקוח,
  *  שם הטבלה, הודעת הניתוק, ומה נעשה **אחרי** שהתשובה חזרה: ⭐ הכתיבה
  *  עצמה זהה בית-לבית. */
@@ -7135,6 +7141,10 @@ async function ysPullFromCloud() {
 
 // טעינה ראשונית מהענן בעלייה — עם יצירה אוטומטית של טבלת kv אם חסרה
 setTimeout(async function() {
+  /*  ⛔ ההקשר נלכד בכניסה ⛔ ונבדק אחרי כל המתנה — ⚠️ הרישום שאחרי
+   *  ה-`await` הוא מה שנזקף לחשבון ההקשר, ⭐ ומשתמש שהתחלף באמצע
+   *  היה מקבל לחשבונו את הצלחת הדחיפה של הקודם. */
+  var _ep = ctxEpoch();
   try {
     // מנסה לקרוא — אם הטבלה חסרה, יוצר אותה דרך pg REST
     var r = await withTimeout(SB.from('ys_settings').select('value').eq('key', 'ys_last_changed').maybeSingle());
@@ -7148,6 +7158,7 @@ setTimeout(async function() {
     }
     if (r.data) {
       var remoteTs = parseInt(JSON.parse(r.data.value)) || 0;
+      if (ctxStale(_ep)) return;
       _ysLastTs = remoteTs;
       await ysPullFromCloud();
       await ysFlushQueue(); // שלח פעולות שניצרו אופליין
@@ -8176,7 +8187,7 @@ function _ysDiskArr(lsKey) {
  *  זאת הוא הכשל השקט עצמו: ⭐ מי שמחליט על סמך המסך חייב לדעת מה גילו
  *  של מה שהוא רואה. ⛔ ונקודת הסימון אחת לשני המודולים — ⚠️ שני מימושים
  *  כמעט-זהים הם בדיוק מה שנסחף. */
-function _ysStaleMark(el, bad) {
+function _ysPullStaleMark(el, bad) {
   if (!el) return;
   el.textContent = bad ? '⚠️ הרענון מהענן נכשל — המוצג הוא העותק שבמכשיר' : '';
   el.style.display = bad ? 'block' : 'none';
@@ -8269,6 +8280,10 @@ async function atLoadData() {
   window._atData=[]; return window._atData;
 }
 async function atSaveData(data) {
+  /*  ⛔ ההקשר נלכד בכניסה ⛔ ונבדק אחרי כל המתנה — ⚠️ הרישום שאחרי
+   *  ה-`await` הוא מה שנזקף לחשבון ההקשר, ⭐ ומשתמש שהתחלף באמצע
+   *  היה מקבל לחשבונו את הצלחת הדחיפה של הקודם. */
+  var _ep = ctxEpoch();
   // t0 נלקח **לפני** קריאת המצב המקומי. רשומה שתסומן אחרי הרגע הזה אינה
   // בתוך הצילום שנדחף, ואישור שלה היה מוריד סימון מרשומה שלא עלתה.
   var _t0=Date.now();
@@ -8294,7 +8309,7 @@ async function atSaveData(data) {
     if(!(_rAt&&_rAt.ok)&&ysCount(data)) { _ysQueueAdd('ys_attend_sessions',data); ysUpdateQueueBadge(); }
     // ⚠️ רק כתיבה שהצליחה היא ראיה — ⭐ ואותה עדות בדיוק מזינה את הסימון ⏳
     //    ואת עֵד הפינוי; ר' `_ysPushedAt`.
-    if(_rAt&&_rAt.ok) pendConfirmPush(PK_AT_SESS,_t0);
+    if(_rAt&&_rAt.ok&&!ctxStale(_ep)) pendConfirmPush(PK_AT_SESS,_t0);
     ysSyncLog('push','ys_attend_sessions',ysCount(data),{local_count:_atLocalN,remote_count:ysCount(_atRemote),result_count:ysCount(data)});
     // עדכן timestamp — מכשירים אחרים יגלו את השינוי בפולינג הבא
     await ysTouchLastChanged();
@@ -8310,6 +8325,10 @@ async function atLoadTreats() {
 // טיפולים חיים בלבד (בלי tombstones) — לכל מסך שמציג או סופר טיפולים
 function atLiveTreats(arr) { return (Array.isArray(arr)?arr:[]).filter(function(t){ return t && !t.deleted; }); }
 async function atSaveTreats(data) {
+  /*  ⛔ ההקשר נלכד בכניסה ⛔ ונבדק אחרי כל המתנה — ⚠️ הרישום שאחרי
+   *  ה-`await` הוא מה שנזקף לחשבון ההקשר, ⭐ ומשתמש שהתחלף באמצע
+   *  היה מקבל לחשבונו את הצלחת הדחיפה של הקודם. */
+  var _ep = ctxEpoch();
   var _t0=Date.now();
   lsSetArray('ys_attend_treats', data, _ysRecTs);
   try {
@@ -8321,7 +8340,7 @@ async function atSaveTreats(data) {
       lsSetArray('ys_attend_treats', data, _ysRecTs);
     }
     var r=await ysCfgSet('ys_attend_treats',data);
-    if(!(r&&r.error)) { pendConfirmPush(PK_AT_TREAT,_t0); _ysMarkPushed('ys_attend_treats'); await ysTouchLastChanged(); }
+    if(!(r&&r.error)&&!ctxStale(_ep)) { pendConfirmPush(PK_AT_TREAT,_t0); _ysMarkPushed('ys_attend_treats'); await ysTouchLastChanged(); }
   } catch (e) { ysWriteFail('atSaveTreats', e); }
   window._atTreats=data;
   return data;
@@ -8360,7 +8379,7 @@ function _atPaintReg() {
 
 // טעינה ראשית של המודול
 window.loadAttend = async function() {
-  var el = document.getElementById('at-stale');
+  var el = document.getElementById('at-pullStale');
   window._atMarks={};
   window._atCurrentSessionId=null;
   window._atPendingRec=null;
@@ -8369,7 +8388,7 @@ window.loadAttend = async function() {
    *  הרשת: ⛔ ובתוכו הלשוניות כבר לחיצות, והלשונית שנפתחה ציירה חיווי
    *  שני משלה — ⚠️ שני ספינרים על מסך אחד. ⭐ הציור הראשון סינכרוני,
    *  ⛔ ולכן החיווי היחיד הוא זה של הלשונית עצמה. */
-  _ysStaleMark(el, false);
+  _ysPullStaleMark(el, false);
   /*  ⛔ העותק נקרא ⛔ ואינו נכתב כברירת מחדל — ⚠️ `_atCfg=atDefaultCfg()`
    *  היה מסמן «נטען», ⭐ והמשיכה שאחריו לא הייתה מחליפה ערך שכבר «יש». */
   atCachedCfg();
@@ -8382,7 +8401,7 @@ window.loadAttend = async function() {
   var _okAt=await Promise.all([_atPullCfg(), _atPullSessions(ysDayWin())]);
   _atPaintReg();
   window.atShowTab(window._atView||'reg');
-  _ysStaleMark(el, !(_okAt[0]&&_okAt[1]));
+  _ysPullStaleMark(el, !(_okAt[0]&&_okAt[1]));
 
   var _todayIsoR=new Date().toISOString().split('T')[0];
   var _openRec=(window._atData||[]).find(function(r){return r&&!r.deleted&&r.open&&r.date_iso===_todayIsoR;});
@@ -9909,6 +9928,10 @@ async function slLoadData() {
 // והרשומות שהוא "ניקה" חזרו מיד — אבל הוא כן כתב מחדש את כל מערך השינה
 // ודיווח "✅ ניקוי הושלם". אין להחזיר אותו; מחיקה = tombstone מפורש בלבד.
 async function slSaveData(data) {
+  /*  ⛔ ההקשר נלכד בכניסה ⛔ ונבדק אחרי כל המתנה — ⚠️ הרישום שאחרי
+   *  ה-`await` הוא מה שנזקף לחשבון ההקשר, ⭐ ומשתמש שהתחלף באמצע
+   *  היה מקבל לחשבונו את הצלחת הדחיפה של הקודם. */
+  var _ep = ctxEpoch();
   var _t0=Date.now();   // ראה ההערה ב-atSaveData
   window._slData=data;
   lsSetArray('ys_sleep_sessions', data, _ysRecTs);
@@ -9927,7 +9950,7 @@ async function slSaveData(data) {
        מפתח. ⛔ ומערך ריק אינו כישלון — ⚠️ הוא «אין מה לדחוף». */
     var _rSl=await pushTable('ys_sleep_sessions',data);
     if(!(_rSl&&_rSl.ok)&&ysCount(data)) { _ysQueueAdd('ys_sleep_sessions',data); ysUpdateQueueBadge(); }
-    if(_rSl&&_rSl.ok) pendConfirmPush(PK_SL_SESS,_t0);
+    if(_rSl&&_rSl.ok&&!ctxStale(_ep)) pendConfirmPush(PK_SL_SESS,_t0);
     ysSyncLog('push','ys_sleep_sessions',ysCount(data),{local_count:_slLocalN,remote_count:ysCount(_slRemote),result_count:ysCount(data)});
     await ysTouchLastChanged();
   } catch (e) { ysWriteFail('slSaveData', e); }
@@ -9941,6 +9964,10 @@ async function slLoadTreats() {
 // תאום של atLiveTreats — טיפולים חיים בלבד (בלי tombstones)
 function slLiveTreats(arr) { return (Array.isArray(arr)?arr:[]).filter(function(t){ return t && !t.deleted; }); }
 async function slSaveTreats(data) {
+  /*  ⛔ ההקשר נלכד בכניסה ⛔ ונבדק אחרי כל המתנה — ⚠️ הרישום שאחרי
+   *  ה-`await` הוא מה שנזקף לחשבון ההקשר, ⭐ ומשתמש שהתחלף באמצע
+   *  היה מקבל לחשבונו את הצלחת הדחיפה של הקודם. */
+  var _ep = ctxEpoch();
   var _t0=Date.now();
   lsSetArray('ys_sleep_treats', data, _ysRecTs);
   try {
@@ -9951,7 +9978,7 @@ async function slSaveTreats(data) {
       lsSetArray('ys_sleep_treats', data, _ysRecTs);
     }
     var r=await ysCfgSet('ys_sleep_treats',data);
-    if(!(r&&r.error)) { pendConfirmPush(PK_SL_TREAT,_t0); _ysMarkPushed('ys_sleep_treats'); await ysTouchLastChanged(); }
+    if(!(r&&r.error)&&!ctxStale(_ep)) { pendConfirmPush(PK_SL_TREAT,_t0); _ysMarkPushed('ys_sleep_treats'); await ysTouchLastChanged(); }
   } catch (e) { ysWriteFail('slSaveTreats', e); }
   window._slTreats=data;
   return data;
@@ -9992,12 +10019,12 @@ function _slPaintReg() {
 
 // טעינה ראשית של מודול שינה
 window.loadSleep = async function() {
-  var el = document.getElementById('sl-stale');
+  var el = document.getElementById('sl-pullStale');
   window._slMarks={};
   window._slCurrentSessionId=null;
   window._slPendingRec=null;
   /*  ⛔ ראה `loadAttend` — אותו סדר בדיוק: ציור מהמטמון, ואז רענון. */
-  _ysStaleMark(el, false);
+  _ysPullStaleMark(el, false);
   /*  ⛔ ראה `loadAttend` — קוראים את העותק ואין כותבים ברירת מחדל. */
   slCachedCfg();
   ysCachedArr('_slData','ys_sleep_sessions');
@@ -10007,7 +10034,7 @@ window.loadSleep = async function() {
   var _okSl=await Promise.all([_slPullCfg(), _slPullSessions(ysDayWin())]);
   _slPaintReg();
   window.slShowTab(window._slView||'reg');
-  _ysStaleMark(el, !(_okSl[0]&&_okSl[1]));
+  _ysPullStaleMark(el, !(_okSl[0]&&_okSl[1]));
 
   var _logIsoR=slGetLogicalDate();
   var _openRecSl=(window._slData||[]).find(function(r){return r&&!r.deleted&&r.open&&r.date_iso===_logIsoR;});
@@ -11156,7 +11183,7 @@ window.slSaveSettingsCfg = async function() {
 
 </script>
 
-<nav class="bottom-nav" id="bottom-nav">
+<nav class="bottom-nav">
   <button class="bn on" data-pg="home" data-act="page-nav" data-page="home">
     <span class="bn-ic">🏠</span><span>ראשי</span>
   </button>
