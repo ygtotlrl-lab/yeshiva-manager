@@ -61,6 +61,7 @@ const APP = {
            'test_dbfacts.mjs',
           'test_sharedsync.mjs',
           'test_signedshared.mjs',
+          'test_toolsid.mjs',
           'test_filesets.mjs',
           'test_inputlayer.mjs',
           'test_iconlayer.mjs',
