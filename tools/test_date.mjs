@@ -167,8 +167,9 @@ assert(log.some((e) => e.where === 'ysHebDate') && log.some((e) => e.where === '
 /*  ⛔ הטענה היא על **הערך** ולא על קיום השם (סבב 80) — ⚠️ טבלת החודשים
  *  נבחרת לפי העיבור, ⭐ ושנה מעוברת נושאת שלושה-עשר חודשים ופשוטה
  *  שנים-עשר: ⛔ מיפוי שקורס את שני האדרים לאחד היה מאחד כ-60 יום לדלי
- *  חודש אחד בארכיון. ⚠️ שם החודש נבדל בין הריפו («אדר א» מול «אדר א׳»),
- *  ⛔ ולכן נמדדת הקידומת ולא המחרוזת המלאה. */
+ *  חודש אחד בארכיון. ⛔ **והשם נמדד במלואו** — ⚠️ גרש עברי `׳` ולא
+ *  אפוסטרוף ולא מרכאה: ⭐ שתי צורות הן שני דליים בארכיון, ⛔ ומיפוי
+ *  ביניהן הוא מקור אמת שני. */
 {
   const leapNames  = H.api.names(5787);   /* תשפ״ז — מעוברת */
   const plainNames = H.api.names(5786);   /* תשפ״ו — פשוטה  */
@@ -180,10 +181,10 @@ assert(log.some((e) => e.where === 'ysHebDate') && log.some((e) => e.where === '
   const adarI  = H.api.heb(H.foreign(2027, 2, 20));
   const adarII = H.api.heb(H.foreign(2027, 3, 20));
   const adar   = H.api.heb(H.foreign(2026, 3, 5));
-  assert(adarI.ok && adarI.monthName.indexOf('אדר א') === 0,
-         `⭐ שנה מעוברת ⟵ «אדר א» (נמדד «${adarI.monthName}»)`);
-  assert(adarII.ok && adarII.monthName.indexOf('אדר ב') === 0,
-         `⭐ ובחודש שאחריו «אדר ב» (נמדד «${adarII.monthName}»)`);
+  assert(adarI.ok && adarI.monthName === 'אדר א׳',
+         `⭐ שנה מעוברת ⟵ «אדר א׳» בגרש עברי (נמדד «${adarI.monthName}»)`);
+  assert(adarII.ok && adarII.monthName === 'אדר ב׳',
+         `⭐ ובחודש שאחריו «אדר ב׳» (נמדד «${adarII.monthName}»)`);
   assert(adar.ok && adar.monthName === 'אדר',
          `⭐ ובשנה פשוטה «אדר» בלבד (נמדד «${adar.monthName}»)`);
   assert(adarI.monthIndex !== adarII.monthIndex,
