@@ -148,12 +148,14 @@ function t2() {
   WIRING.forEach(([re, msg]) => assert(re.test(SRC), msg));
   /* ⛔ הטענה המרכזית התהפכה (סבב 78) — ⚠️ השורות **הן** השער: ⭐ אישור ה-⏳
      נשען על הצלחתן, ⛔ ואין עוד ערך שלם שאפשר להישען עליו.
+     ⛔ **ועל השומר** (סבב 110) — ⚠️ המסלול פותח שתי המתנות, ⭐ ומשתמש
+     שהתחלף באמצע היה מקבל לחשבונו את הצלחת הדחיפה של הקודם.
      ⚠️ ⛔ ועֵד הפינוי אינו נכתב כאן (סבב 102) — ⭐ שכבת הדחיפה המשותפת
      מסמנת אותו במעבר עצמו: ⛔ שני אתרי סימון לאותו עֵד הם שתי הכרעות
      על אותה ראיה. */
   noneIn(/ysCfgSet\('ys_attend_sessions'|ysCfgSet\('ys_students'|ysCfgSet\('ys_sleep_sessions'/, SRC,
     '3ו · ⛔ אין כתיבת ערך שלם למפתח שיש לו טבלה — מקור אמת אחד');
-  someIn(/if\(_rAt&&_rAt\.ok\) pendConfirmPush\(PK_AT_SESS,_t0\)/, SRC,
+  someIn(/if\(_rAt&&_rAt\.ok&&!ctxStale\(_ep\)\) pendConfirmPush\(PK_AT_SESS,_t0\)/, SRC,
     '3ז · ⭐ אישור ה-⏳ תלוי בהצלחת הכתיבה לשורות');
   assert(/ys_sessions_rows/.test(SRC) && /ys_marks_rows/.test(SRC),
     '3ח · מקורות הגיבוי החדשים רשומים ב-BK_CFG (ומשם לרשימת-ההיתר של 004)');
