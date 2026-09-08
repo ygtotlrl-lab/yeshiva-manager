@@ -27,8 +27,8 @@ import crypto from 'node:crypto';
 const APP = {
   checks: [
     [/HW_CFG = \{\s*\n\s*enabled: true,/, 'החלון החם פעיל (HW_CFG.enabled=true, סבב 56)'],
-    [/key: 'ys_attend_sessions',/, 'מפרט החלון קיים ל-ys_attend_sessions (סבב 56)'],
-    [/hwDiskFilter\('ys_attend_sessions'/, 'שער הדיסק מחווט למשפך הכתיבה (סבב 56)'],
+    [/key: mirrorKey\('ys_attend_sessions'\),/, 'מפרט החלון קיים ל-ys_attend_sessions (סבב 56)'],
+    [/hwDiskFilter\(k, MIRROR\[t\] \|\| \[\]\)/, 'שער הדיסק מחווט למשפך הכתיבה של שכבת המראה (סבב 114)'],
     [/try \{ hwBoot\(\); \}/, 'hwBoot מחווטת מפונקציית העלייה'],
     [/hwRestoreMount\(\);/, 'כפתור השחזור מחווט ממסך ההגדרות'],
     [/if \(s\.eq\) q = q\.eq\(s\.eq\[0\], s\.eq\[1\]\);/, 'מודול הגיבוי תומך ב-eq למקורות טבלה (מוכנות שלב ב)'],

@@ -188,19 +188,110 @@ assert(memory.length === before, '⛔ מערך הזיכרון לא השתנה �
 /* ── 3. החיווט הסטטי ───────────────────────────────────────────────────── */
 const STATIC = [
   [/HW_CFG = \{\s*\n\s*enabled: true,/, 'HW_CFG.enabled = true'],
-  [/key: 'ys_attend_sessions',/, "מפרט החלון קיים ל-ys_attend_sessions"],
-  [/function _ysAtDiskSave\(rows\) \{\s*\n\s*return lsSetArray\('ys_attend_sessions', hwDiskFilter\(/,
+  [/key: mirrorKey\('ys_attend_sessions'\),/, "מפרט החלון קיים ל-ys_attend_sessions"],
+  [/function mirrorSave\(t\) \{[\s\S]{0,200}?hwDiskFilter\(k, MIRROR\[t\] \|\| \[\]\)/,
    'משפך הכתיבה לדיסק עובר דרך hwDiskFilter'],
-  [/try \{ hwNoteCloud\(kvKey, r\.data\); \}/, 'הראיה העננית נרשמת במשפך הקריאה (ysCloudGet)'],
+  [/try \{ hwNoteCloud\(mirrorKey\(kvKey\), r\.data\); \}/, 'הראיה העננית נרשמת במשפך הקריאה (ysCloudGet)'],
 ];
 for (const [re, msg] of STATIC) assert(re.test(SRC), msg);
 
-/*  ⛔ אתר כתיבה גולמי אחד בלבד — זה שבתוך `HW_CFG.specs[].apply`, שהמודול
- *  קורא לו **אחרי** שכבר סינן. כל אתר נוסף הוא שער דיסק שנשמט. */
-const raw = (SRC.match(/lsSetArray\('ys_attend_sessions'/g) || []).length;
-assert(raw === 2, '⛔ שתי כתיבות גולמיות בלבד: apply של המפרט והמשפך עצמו (נמדד ' + raw + ')');
+/*  ⛔ אתר כתיבה גולמי אחד בלבד — `mirrorWrite`, שהמודול קורא לו **אחרי**
+ *  שכבר סינן. כל אתר נוסף הוא שער דיסק שנשמט. */
+const raw = (SRC.match(/lsSetArray\(mirrorKey\(t\), MIRROR_CFG\.clean/g) || []).length;
+assert(raw === 1, '⛔ כתיבה גולמית אחת בלבד: `mirrorWrite` (נמדד ' + raw + ')');
+const flat = (SRC.match(/lsSet(?:Array)?\('ys_(?:attend_sessions|sleep_sessions|students)'/g) || []).length;
+assert(flat === 0, '⛔ אפס כתיבות למפתח שטוח שיש לו מראה (נמדד ' + flat + ')');
 assert((SRC.match(/_ysAtDiskSave\(/g) || []).length >= 6,
   'חמשת אתרי הכתיבה + ההגדרה עוברים דרך המשפך');
+
+/* ── 4. שכבת המראה — מפתח לכל טבלה, והגירה חד-פעמית (סבב 114) ──────────── */
+/*  ⛔ הפונקציות האמיתיות רצות ב-`vm` ⛔ ולא מדומות — ⚠️ רתמה שמחקה אותן
+ *  מודדת את עצמה. */
+function srcFn(name) {
+  let at = SRC.indexOf('\nfunction ' + name + '(');
+  if (at < 0) at = SRC.indexOf('\nasync function ' + name + '(');
+  if (at < 0) throw new Error('לא נמצאה הפונקציה ' + name);
+  let i = SRC.indexOf('{', at), depth = 0, j = i;
+  for (; j < SRC.length; j++) {
+    if (SRC[j] === '{') depth++;
+    else if (SRC[j] === '}') { depth--; if (!depth) break; }
+  }
+  return SRC.slice(at + 1, j + 1);
+}
+function srcVar(name) {
+  const m = new RegExp('^var ' + name + '\\s*=', 'm').exec(SRC);
+  if (!m) throw new Error('לא נמצאה ההצהרה ' + name);
+  let depth = 0;
+  for (let j = m.index; j < SRC.length; j++) {
+    const c = SRC[j];
+    if ('{(['.includes(c)) depth++;
+    else if ('})]'.includes(c)) depth--;
+    else if (c === ';' && depth === 0) return SRC.slice(m.index, j + 1);
+  }
+  throw new Error('הצהרה לא נסגרה: ' + name);
+}
+function mirrorHarness(store) {
+  const ctx = {
+    console: { warn() {}, error() {} }, JSON, Object, Array, String, Number, isFinite, Date,
+    localStorage: { removeItem(k) { delete store[k]; } },
+    lsGet: (k, d) => (k in store ? store[k] : (d === undefined ? null : d)),
+    lsSet: (k, v) => { store[k] = String(v); return true; },
+    lsSetArray: (k, arr) => { store[k] = JSON.stringify(arr); return true; },
+    hwDiskFilter: (k, rows) => rows,
+    _ysRecTs: () => 0,
+    ysWriteFail: () => {},
+    getDefaultStudents: () => [{ id: 0, name: 'ברירת מחדל', cls: 'a' }],
+    HE: new Intl.Collator('he'),
+  };
+  ctx.globalThis = ctx;
+  vm.createContext(ctx);
+  vm.runInContext(
+    [srcVar('MIRROR_CFG'), srcVar('MIRROR'), srcVar('PUSH_TABLES')].join('\n') + '\n' +
+    ['mirrorKey', 'mirrorTables', 'mirrorLoad', 'mirrorSave', 'mirrorWrite',
+     'mirrorKeysMigrate', 'mirrorBoot',
+     '_ysDiskArr', '_ysStudentsRaw', '_ysStudentsSaveRaw', 'getStudents'].map(srcFn).join('\n'), ctx);
+  return ctx;
+}
+{
+  const store = {};
+  const stu = [{ id: 1, name: 'אברהם', cls: 'a' }, { id: 2, name: 'יצחק', cls: 'b', deleted: true }];
+  const at = [{ id: 's1', updatedAt: 5 }];
+  store['ys_students'] = JSON.stringify(stu);
+  store['ys_attend_sessions'] = JSON.stringify(at);
+  const h = mirrorHarness(store);
+  h.mirrorKeysMigrate();
+  assert(store['ys_mirror_students'] === JSON.stringify(stu) &&
+         store['ys_mirror_attend_sessions'] === JSON.stringify(at),
+    '⭐ ההגירה כתבה את המפתחות החדשים בתוכן שהיה');
+  assert(!('ys_students' in store) && !('ys_attend_sessions' in store),
+    '⛔ ואפס מפתח כפול — השטוחים ירדו');
+  h.mirrorLoad();
+  assert(h.MIRROR.ys_students.length === 2 && h.MIRROR.ys_attend_sessions.length === 1,
+    '⭐ הטעינה ממפתחת בשם הטבלה');
+  assert(h.MIRROR.ys_sleep_sessions === null,
+    '⛔ מפתח שאינו על הדיסק הוא `null` ⛔ ולא מערך ריק');
+  assert(h.getStudents().length === 1 && h.getStudents()[0].name === 'אברהם',
+    '⚠️ הנתונים נקראים — המצבה מהמראה, בלי המחוקים');
+  assert(h._ysDiskArr('ys_attend_sessions') === h.MIRROR.ys_attend_sessions,
+    '⭐ קריאת הדיסק למפתח שיש לו מראה עוברת במראה');
+  h._ysStudentsSaveRaw([{ id: 3, name: 'יעקב', cls: 'g' }]);
+  assert(!('ys_students' in store) && JSON.parse(store['ys_mirror_students'])[0].id === 3,
+    '⛔ הכתיבה יורדת למפתח המראה בלבד');
+  const before2 = JSON.stringify(store);
+  h.mirrorKeysMigrate();
+  assert(JSON.stringify(store) === before2, '⛔ ריצה שנייה של ההגירה אינה משנה דבר');
+}
+{
+  /*  ⛔ המיפוי 1:1 ל-`PUSH_TABLES` — ⚠️ מפתח מראה שאינו טבלה שנדחפת, או
+   *  טבלה שנדחפת ואין לה מראה, ⭐ שניהם שוברים את השכבה. */
+  const h = mirrorHarness({});
+  const keys = h.mirrorTables();
+  assert(keys.length === 3 && keys.join('|') === h.PUSH_TABLES.join('|'),
+    '⭐ מפתחות המראה = PUSH_TABLES (' + keys.join('|') + ')');
+  assert(h.MIRROR_CFG.noPush.length === 0, '⛔ ואין טבלה שאינה נדחפת');
+  assert(h.mirrorKey('ys_attend_sessions') === 'ys_mirror_attend_sessions',
+    '⭐ מפתח האחסון נגזר משם הטבלה, בלי כפל תחילית');
+}
 
 if (RUN_MUT) {
 /* ── מוטציות ───────────────────────────────────────────────────────────── */
