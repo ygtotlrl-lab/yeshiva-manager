@@ -101,6 +101,9 @@ if ('serviceWorker' in navigator) {
    *  סרגל ניווט תחתון, ⛔ ורק מתחת לנקודת השבירה שבה הוא יורד —
    *  ⚠️ והנקודה נגזרת מהסולם ⛔ ואינה כתובה כאן. */
   --toast-bottom:26px;
+  /*  ⛔ גוון האזהרה של אזור המצב — ⚠️ אסימון אחד בשם אחד בארבעתן,
+   *  ⭐ והגוון בלבד נבדל: ⛔ כלל משותף אינו יכול לנקוב בשם פרטי. */
+  --stale-ink:#a3341f;
 
 --navy-ink:#1a3a6b;--navy-fill:#1a3a6b;--navy2:#234a8a;--navy3:#0f2347;--gold:#c9a84c;--bg:#f0f4fa;--bg2:#fff;--border:#d8e2f0;--text:#1a2340;--text2:#4a5568;--text3:#8a97b0;--r:10px;--shadow:0 2px 8px rgba(26,58,107,.1);--shadow2:0 4px 20px rgba(26,58,107,.16)}
 /*  ⛔ ערכת נושא כהה — ⚠️ אותם שמות משתנים בדיוק ואותם יחסים,
@@ -108,6 +111,7 @@ if ('serviceWorker' in navigator) {
  *  ⛔ ולא במבנה — ⚠️ שני מבנים לאותה ערכה הם שתי ערכות. */
 @media (prefers-color-scheme:dark){
   :root{
+    --stale-ink:#ffb4a2;
     --bg:#0d151d; --bg2:#131e29;
     --text:#e8eef5; --text2:#c2cfdc; --text3:#93a5b8;
     --border:#24333f;
@@ -392,7 +396,7 @@ header{justify-content:space-between;padding:0 14px}
 .ur-name{flex:1;font-weight:600;font-size:.88rem}
 .ur-role{font-size:.74rem;padding:3px 9px;border-radius:20px;font-weight:600}
 .role-admin{background:#fef3c7;color:#92400e}
-.role-senior{background:#dbeafe;color:#1e40af}
+.role-manager{background:#dbeafe;color:#1e40af}
 .role-junior{background:#dcfce7;color:#166534}
 .ua{display:flex;gap:5px}
 .ua button{border:1px solid var(--border);background:var(--bg2);border-radius:7px;padding:5px 9px;cursor:pointer;font-size:.75rem;font-family:Heebo;transition:all .15s}
@@ -423,8 +427,11 @@ header{justify-content:space-between;padding:0 14px}
 /* ═══ סוף CSS שכבת הטוסט ════════════════════════════════════════════════ */
 /* ═══ אזור מצב — CSS משותף (סבב 15/17) ══════════════════════════════════
    זהה בית-לבית בארבע האפליקציות. שני הרכיבים שיושבים בתחתית כל מסך
-   הגדרות: בלוק "☁️ סנכרון" ורכיב "מידע טכני ›". הכללים לא נשענים על
-   משתני-הצבע של אף אפליקציה (הם נבדלים ביניהן) אלא יורשים צבע וגופן. */
+   הגדרות: בלוק "☁️ סנכרון" ורכיב "מידע טכני ›". הכללים יורשים צבע
+   וגופן, ⛔ ואינם נשענים על אסימוני הגוון של אף אפליקציה — הם נבדלים
+   ביניהן. ⚠️ **החריג היחיד הוא `--stale-ink`** (סבב 113): ⭐ הוא מוגדר
+   בשם אחד בארבעתן, בערכה הבהירה ובכהה, ⛔ ולכן כלל שנשען עליו נשאר
+   זהה בית-לבית. */
 .tech-info{margin-top:22px;font-size:12px;opacity:.7}
 .tech-info>summary{cursor:pointer;list-style:none;display:inline-block;padding:4px 2px}
 .tech-info>summary::-webkit-details-marker{display:none}
@@ -436,6 +443,11 @@ header{justify-content:space-between;padding:0 14px}
 .sync-line .sync-act{margin-top:8px}
 .sync-line button{font:inherit;font-size:12px;padding:5px 14px;border-radius:8px;border:1px solid rgba(0,0,0,.18);background:rgba(0,0,0,.05);color:inherit;cursor:pointer}
 .sync-line button[disabled]{opacity:.5;cursor:default}
+/*  ⛔ הבאנר «הגיבוי לא רץ N ימים» נושא גוון משלו — ⚠️ שאר הבלוק יורש
+    צבע, ⭐ והוא הודעת אזהרה שחייבת להיקרא כאזהרה. ⛔ והגוון יושב
+    ב-`--stale-ink` ⛔ ולא כערך מוטבע: ⚠️ הוא מוגדר בערכה הבהירה ובכהה
+    בשם אחד, ⭐ ולכן הכלל עצמו זהה בארבע האפליקציות. */
+.bkStale{margin-top:4px;font-weight:700;color:var(--stale-ink)}
 /* ═══ סוף CSS אזור המצב ═════════════════════════════════════════════════ */
 .ls-crit-line{margin-top:18px;font-size:12px;font-weight:600;color:#b3261e}
 </style>
@@ -1048,7 +1060,7 @@ var AUTH = {
   get user() { return sessGet(); },          // המבנה: {id, username, full_name, role}
   set user(v) { sessSet(v); },
   offlineLogin: false, // true = אומת מול עותק מקומי (ללא רשת); מאומת מחדש כשהרשת חוזרת
-  perms: null,         // המבנה: {students:{admin:'edit',senior:'view',junior:'none'}, ...}
+  perms: null,         // המבנה: {students:{admin:'edit',manager:'view',junior:'none'}, ...}
   MODULES: [
     {id:'students', label:'👥 מצבת תלמידים'},
     {id:'attend',   label:'✅ שמירת סדרים'},
@@ -1059,16 +1071,16 @@ var AUTH = {
     {id:'settings', label:'⚙️ הגדרות מערכת'}
   ],
 
-  ROLE_LABELS: {admin:'מנהל', senior:'צוות בכיר', junior:'צוות'},
+  ROLE_LABELS: {admin:'מנהל', manager:'צוות בכיר', junior:'צוות'},
 
   DEFAULT_PERMS: {
-    students: {admin:'edit', senior:'edit', junior:'view'},
-    attend:   {admin:'edit', senior:'edit', junior:'view'},
-    sleep:    {admin:'edit', senior:'edit', junior:'view'},
-    exams:    {admin:'edit', senior:'edit', junior:'view'},
-    files:    {admin:'edit', senior:'edit', junior:'none'},
-    reports:  {admin:'edit', senior:'view', junior:'none'},
-    settings: {admin:'edit', senior:'none', junior:'none'}
+    students: {admin:'edit', manager:'edit', junior:'view'},
+    attend:   {admin:'edit', manager:'edit', junior:'view'},
+    sleep:    {admin:'edit', manager:'edit', junior:'view'},
+    exams:    {admin:'edit', manager:'edit', junior:'view'},
+    files:    {admin:'edit', manager:'edit', junior:'none'},
+    reports:  {admin:'edit', manager:'view', junior:'none'},
+    settings: {admin:'edit', manager:'none', junior:'none'}
   }
 };
 
@@ -1149,7 +1161,7 @@ function ysApplyPerms(p) {
 /* ══════════════════════════════════════════════════════════════════════════
    טביעת סיסמה — PBKDF2-SHA256 (סבב 22)
    ══════════════════════════════════════════════════════════════════════════
-   **הבעיה שסבב 22 בא לפתור.** סבב 21 צמצם את `ys_users_cache` למשתמש
+   **הבעיה שסבב 22 בא לפתור.** סבב 21 צמצם את מראת המשתמשים למשתמש
    המחובר בלבד, כדי שלא יישבו סיסמאות של כל הצוות על כל מכשיר. הצמצום
    נכון מבחינת חשיפה — ו**פוגע בדרישה תפעולית מחייבת**: משגיחים עובדים
    בישיבה בלי קליטה, וכל משתמש חייב להיכנס אופליין בכל מכשיר, תמיד. אחרי
@@ -1233,6 +1245,25 @@ function ysIsMissingFpCol(err) {
 // שנשאר על הדיסק ממטמון ישן **נמחק בהזדמנות הראשונה**, ולא שורד לנצח.
 // המחיר: רשומה ישנה מאבדת את יכולת האימות עד הרענון המקוון הבא, וזה
 // בדיוק הנכון — סיסמה גלויה על הדיסק אינה תחליף לטביעה.
+/*  ⛔ שם מפתח אחד לשלוש האפליקציות (סבב 113) — ⚠️ `<קידומת>_mirror_users`:
+ *  ⭐ שלושתן מחזיקות את **אותו** מנגנון — עותק מקומי של טבלת המשתמשים
+ *  לכניסה אופליין — ⛔ ושלושה שמות לאותו מנגנון הם שלושה חיפושים.
+ *  ⚠️ **וההגירה מקומית וחד-פעמית**: ⛔ המפתח הישן נקרא, נכתב לחדש,
+ *  ⛔ ורק כתיבה שהצליחה מתירה למחוק אותו — ⚠️ מחיקה לפני כתיבה מוצלחת
+ *  הייתה נועלת בחוץ מכשיר שאין לו רשת. */
+var YS_USERS_KEY = 'ys_mirror_users';
+var YS_USERS_KEY_LEGACY = 'ys_users_cache';
+function ysUsersMirrorMigrate() {
+  try {
+    if (lsGet(YS_USERS_KEY) != null) return false;
+    var old = lsGet(YS_USERS_KEY_LEGACY);
+    if (old == null) return false;
+    if (!lsSet(YS_USERS_KEY, old)) return false;
+    try { localStorage.removeItem(YS_USERS_KEY_LEGACY); }
+    catch (e) { ysWriteFail('ysUsersMirrorMigrate', e); }
+    return true;
+  } catch (e) { ysWriteFail('ysUsersMirrorMigrate', e); return false; }
+}
 function ysUserSlim(u) {
   // ⛔ שדות מפורשים בלבד (סבב 22) — **`password_hash` אינו ביניהם, ולעולם לא יהיה.**
   return { client_id: u.client_id, username: u.username, full_name: u.full_name,
@@ -1249,7 +1280,7 @@ function ysUsersCacheSlimList(rows) {
 function ysUsersCacheSaveAll(rows) {
   try {
     if (!Array.isArray(rows)) return;
-    lsSet('ys_users_cache', JSON.stringify(ysUsersCacheSlimList(rows)));
+    lsSet(YS_USERS_KEY, JSON.stringify(ysUsersCacheSlimList(rows)));
   } catch (e) { ysWriteFail('ysUsersCacheSaveAll', e); }
 }
 // עדכון שורה אחת בתוך המטמון הקיים, בלי לאבד את השאר (כניסה, מעבר-משתמש,
@@ -1261,11 +1292,11 @@ function ysUsersCacheSave(user) {
     var rest = ysUsersCacheSlimList(ysUsersCacheGet())
       .filter(function (u) { return String(u.client_id) !== String(user.client_id); });
     rest.push(ysUserSlim(user));
-    lsSet('ys_users_cache', JSON.stringify(rest));
+    lsSet(YS_USERS_KEY, JSON.stringify(rest));
   } catch (e) { ysWriteFail('ysUsersCacheSave', e); }
 }
 function ysUsersCacheGet() {
-  try { return JSON.parse(lsGet('ys_users_cache') || 'null'); } catch(e) { return null; }
+  try { return JSON.parse(lsGet(YS_USERS_KEY) || 'null'); } catch(e) { return null; }
 }
 // אימות אופליין מול הטביעה. מחזירה אחת מארבע: 'ok' · 'bad' (סיסמה שגויה)
 // · 'no-fp' (אין טביעה לרשומה) · 'no-crypto' (הדפדפן לא תומך).
@@ -1498,6 +1529,10 @@ async function doLogin() {
 }
 
 async function _doLoginInner() {
+  /*  ⛔ ההגירה של מפתח המראה רצה כאן ⛔ ולא בפונקציית העלייה — ⚠️ העלייה
+   *  רצה **אחרי** הכניסה, ⭐ והקורא הראשון של המראה הוא מסלול הכניסה
+   *  האופליין עצמו: ⛔ הגירה שרצה אחריו הייתה מגיעה מאוחר מדי. */
+  ysUsersMirrorMigrate();
   var username = document.getElementById('auth-user').value.trim();
   var pass = document.getElementById('auth-pass').value.trim();
   var errEl   = document.getElementById('auth-err');
@@ -1568,8 +1603,8 @@ async function _doLoginInner() {
   } else {
     // אין רשת / פסק זמן / שגיאת שרת (פרויקט מושהה, מפתח פג, RLS) —
     // בכל אלה השרת לא ענה תשובה סמכותית, ולכן מנסים את העותק המקומי.
-    dbg(netFail ? 'אין רשת — מנסה אימות מקומי (ys_users_cache)'
-               : 'שגיאת שרת — מנסה אימות מקומי (ys_users_cache)');
+    dbg(netFail ? 'אין רשת — מנסה אימות מקומי (מראת המשתמשים)'
+               : 'שגיאת שרת — מנסה אימות מקומי (מראת המשתמשים)');
     ysLoginLog('login_fail', netFail ? 'net_error' : 'server_error', ysLoginDetails(username));
     var cache = ysUsersCacheGet();
     // Array.isArray ולא cache.length — ערך תקין-כ-JSON שאינו מערך (למשל מחרוזת)
@@ -2304,11 +2339,11 @@ function showDenied() {
 function renderSettings() {
   showSettingsHome();
   // הסתר ניהול משתמשים ממי שאינו admin
-  var isAdmin = AUTH.user && AUTH.user.role === 'admin';
+  var admin = isAdmin();
   var su = document.getElementById('ss-users');
   var sp = document.getElementById('ss-perms');
-  if (su) su.style.display = isAdmin ? '' : 'none';
-  if (sp) sp.style.display = isAdmin ? '' : 'none';
+  if (su) su.style.display = admin ? '' : 'none';
+  if (sp) sp.style.display = admin ? '' : 'none';
 }
 
 // ---- רשימת משתמשים ----
@@ -2630,7 +2665,7 @@ function userFormHtml() {
     '<label for="um-role">תפקיד</label>'+
     '<select id="um-role" style="border:2px solid var(--border);border-radius:8px;padding:10px;font-family:Heebo;width:100%;font-size:.9rem">'+
       '<option value="admin">מנהל</option>'+
-      '<option value="senior">צוות בכיר</option>'+
+      '<option value="manager">צוות בכיר</option>'+
       '<option value="junior">צוות</option>'+
     '</select>'+
     /*  ⛔ אין כאן שדה «סיסמה נוכחית» — ⚠️ הצגתה חייבה לקרוא את הטקסט הגלוי
@@ -2716,7 +2751,7 @@ function renderPermsTable() {
   ];
   var html = AUTH.MODULES.map(function(m) {
     var row = '<tr><td>'+m.label+'</td>';
-    ['admin','senior','junior'].forEach(function(role) {
+    ['admin','manager','junior'].forEach(function(role) {
       var cur = (p[m.id]||{})[role] || 'none';
       var sel = '<select class="ps" aria-label="הרשאה למודול" data-mod="'+m.id+'" data-role="'+role+'">';
       opts.forEach(function(o) {
@@ -2724,7 +2759,7 @@ function renderPermsTable() {
       });
       sel += '</select>';
       // מנהל תמיד edit ב-settings
-      if (m.id === 'settings' && role === 'admin') {
+      if (m.id === 'settings' && role === ROLE_ADMIN) {
         row += '<td><span style="color:var(--navy-ink);font-weight:600">✏️ עריכה</span></td>';
       } else {
         row += '<td>'+sel+'</td>';
@@ -2739,7 +2774,7 @@ async function savePerms() {
   var p = {};
   AUTH.MODULES.forEach(function(m) {
     p[m.id] = {};
-    ['admin','senior','junior'].forEach(function(role) {
+    ['admin','manager','junior'].forEach(function(role) {
       var sel = document.querySelector('.ps[data-mod="'+m.id+'"][data-role="'+role+'"]');
       p[m.id][role] = sel ? sel.value : 'none';
     });
@@ -3006,7 +3041,7 @@ var LS_CFG = {
   hzPrefix: 'ys_ls_hz_',
 
   // שלב א — מטמונים שניתן לשחזר מהענן בכל רגע.
-  // ⛔ `ys_users_cache` ו-`ys_perms_cache` אינם נכנסים לכאן —
+  // ⛔ מראת המשתמשים ו-`ys_perms_cache` אינם נכנסים לכאן —
   // אינם מטמוני מהירות אלא **מסלול הכניסה האופליין**: פינוי שלהם היה מונע
   // כניסה בלי רשת, כלומר משבית את האפליקציה
   // בדיוק במצב שבו הפינוי נועד לעזור. הם גם קטנים (KB בודדים) ולכן לא היו
@@ -3281,7 +3316,7 @@ function lsToastThrottled(msg) {
   var now = Date.now();
   if (now - _lsToastAt < 8000) return;
   _lsToastAt = now;
-  try { lsToast(msg, 6000); } catch (e) { }
+  try { lsToast(msg, 6000, 'bad'); } catch (e) { }
 }
 function lsGet(key, fallback) {
   try {
@@ -3663,9 +3698,9 @@ function lsBootAlert(u) {
     lsAlert(MSG_LS_CRIT + ' (' + lsFmtBytes(u.total) + ' מתוך ' + lsFmtBytes(u.quota) + ')');
   } else if (u.total >= LS_WARN_BYTES) {
     lsLog('⚠️ מעל 3MB', lsFmtBytes(u.total), u.total);
-    try { lsToast(MSG_LS_WARN + ' (' + lsFmtBytes(u.total) + ')', 5000); } catch (e) { }
+    try { lsToast(MSG_LS_WARN + ' (' + lsFmtBytes(u.total) + ')', 5000, 'bad'); } catch (e) { }
   }
-  if (lsHorizonKeys().length) { try { lsToast(MSG_LS_PRUNED, 6000); } catch (e1) { } }
+  if (lsHorizonKeys().length) { try { lsToast(MSG_LS_PRUNED, 6000, 'bad'); } catch (e1) { } }
 }
 
 /* ── שורת המצב בהגדרות ─────────────────────────────────────────────────── */
@@ -3748,7 +3783,12 @@ function lsSweepNow() {
   function finish(extra) {
     freed += Number(extra) || 0;
     lsRenderStatus();
-    try { lsToast(freed > 0 ? ('✅ פונו ' + lsFmtBytes(freed)) : '⚠️ אין מה לפנות — אין נתונים מסונכרנים וישנים דיים', 4000); } catch (e) { }
+    /*  ⛔ שתי הודעות ולא אחת — ⚠️ הסיווג נגזר מהמסלול: ⭐ פינוי שהצליח
+     *  הוא הודעה נייטרלית, ⛔ ו«אין מה לפנות» היא אזהרה. */
+    try {
+      if (freed > 0) lsToast('✅ פונו ' + lsFmtBytes(freed), 4000);
+      else lsToast('⚠️ אין מה לפנות — אין נתונים מסונכרנים וישנים דיים', 4000, 'bad');
+    } catch (e) { }
     return freed;
   }
   return p.then(finish, function () { return finish(0); });
@@ -4986,6 +5026,34 @@ function sessBoot() {
   return _sessPurge();
 }
 /* ═══════════════ סוף מודול הסשן ═════════════════════════════════════════ */
+/* ═══ מודל ההרשאות — מודול משותף (סבב 113) ════════════════════════════════
+   ⛔ ההרשאה נגזרת מ-`role` שבטבלת המשתמשים ⛔ ולא מסיסמת שער — ⚠️ ואוצר
+      המילים אחד בשלוש האפליקציות: `admin` הוא המורשה, `manager` מי שאינו.
+      ⭐ אפליקציה שיש בה מטריצת הרשאות נושאת דרגת ביניים נוספת, ⛔ והיא
+      מוכרזת בשער עם נימוקה.
+   ⛔ **ההשוואה היא ל-`admin` בדיוק ⛔ ולא «שונה מ-manager»** — ⚠️ תפקיד
+      שהוקלד בטעות, או עמודה ריקה, שוללים הרשאה ⛔ ולעולם אינם מעניקים
+      אותה: ⭐ נפילה-חזרה לשם התפקיד הייתה שער שנפתח לכל מקליד.
+   ⛔ **ואין השוואה שנייה מחוץ לבלוק** — ⚠️ שלוש השוואות באותו נושא הן
+      שלוש הזדמנויות לטעות, ⭐ ותיקון באחת משאיר את השתיים סותרות אותה.
+   ⚠️ מקור המשתמש נבדל בין האפליקציות (`AUTH.user` · `state.user`) ⛔ ולכן
+      הוא נלקח כאן מ-`sessGet()`, ⭐ שהוא נקודת המעבר האחת של הסשן
+      בשלושתן; ⛔ והביטוי הפרטי מוצהר בשער.
+   ⛔ שינוי כאן — שלוש האפליקציות **ושלושת עותקי השער**, באותו סבב.
+   ══════════════════════════════════════════════════════════════════════ */
+var ROLE_ADMIN = 'admin';
+function isAdminOf(u) { return !!u && String(u.role) === ROLE_ADMIN; }
+function isAdmin() { return isAdminOf(sessGet()); }
+/* ═══════════════ סוף מודול מודל ההרשאות ═════════════════════════════════ */
+/*  ⛔ דרגת הביניים — ⚠️ מסכי ההשגחה פתוחים למנהל **וגם** לדרגה שמעל
+ *  הצוות: ⭐ זו הדרגה שמטריצת ההרשאות מחזיקה כאן ואין לה מקבילה בשתיים
+ *  האחרות, ⛔ ולכן ההשוואה הזו יושבת מחוץ לבלוק המשותף ומוכרזת בשער.
+ *  ⚠️ ההשוואה למנהל עוברת ב-`isAdminOf` ⛔ ואינה משוכפלת כאן. */
+function ysSupervisionAccess() {
+  var u = sessGet();
+  return isAdminOf(u) || (!!u && String(u.role) === 'manager');
+}
+
 
 
 /* ── PL_CFG — הדבר היחיד שנבדל בין האפליקציות ──────────────────────────── */
@@ -5310,7 +5378,7 @@ function ysHwInWindow(rec) {
 var HW_CFG = {
   enabled: true,
   admin: function () {
-    try { return !!(AUTH.user && AUTH.user.role === 'admin'); }
+    try { return isAdmin(); }
     catch (e) { return false; }
   },
   specs: [{
@@ -6688,7 +6756,7 @@ function toast(msg, dur, kind) {
 /*  ⛔ משך הודעת האחסון ⛔ ואינו ברירת המחדל של הטוסט — ⚠️ היא מדווחת על
    כשל כתיבה, ⭐ והקורא חייב זמן לקרוא אותה. */
 var LS_TOAST_MS = 5000;
-function lsToast(msg, dur) { try { toast(msg, dur || LS_TOAST_MS); } catch (e) {} }
+function lsToast(msg, dur, kind) { try { toast(msg, dur || LS_TOAST_MS, kind); } catch (e) {} }
 /* ═══════════════ סוף מודול שכבת המודאל ═════════════════════════════════ */
 /* ═══ קריאת ערך מספרי — מודול משותף (סבב 104) ═════════════════════════════
    ⛔ שינוי כאן — ארבע האפליקציות **וארבעת עותקי השער**, באותו סבב: אחרת
@@ -7403,7 +7471,7 @@ function renderStudents(){
 
   // כפתור "ניהול רשימה" — admin only
   var btnML=document.getElementById('btn-manage-list');
-  if(btnML) btnML.style.display=(AUTH.user&&AUTH.user.role==='admin')?'':'none';
+  if(btnML) btnML.style.display=isAdmin()?'':'none';
 
   // מונה כפתורי סינון — רק תלמידים פעילים
   var tabsRow=document.getElementById('class-tabs-row');
@@ -7558,8 +7626,7 @@ var MANAGE_PICK = {
   'year':   function () { window.openYearTransitionDlg(); }
 };
 window.openManageListDlg = function(){
-  var isAdmin=AUTH.user&&AUTH.user.role==='admin';
-  if(!isAdmin){toast('⚠️ גישה למנהלים בלבד');return;}
+  if(!isAdmin()){toast('⚠️ גישה למנהלים בלבד');return;}
   var ITEMS=[
     {icon:'➕',label:'הוסף תלמיד',k:'add'},
     {icon:'➖',label:'סמן תלמיד כלא פעיל',k:'deact'},
@@ -9390,7 +9457,7 @@ window.atSupNav = function(dir) {
 window.atRenderSupervision = async function() {
   var el=document.getElementById('at-sup-content');
   if(!el) return;
-  if(!AUTH.user||(AUTH.user.role!=='admin'&&AUTH.user.role!=='senior')){
+  if(!ysSupervisionAccess()){
     el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3)">🔒 גישה לחניכים בכירים ומנהלים בלבד</div>';return;
   }
   /*  ⛔ מציג מיד ⛔ ומרענן ברקע (סבב 85) — ⚠️ עד כאן המסך המתין לרשת
@@ -10867,7 +10934,7 @@ window.slSupNav = function(dir) {
 window.slRenderSupervision = async function() {
   var el=document.getElementById('sl-sup-content');
   if(!el) return;
-  if(!AUTH.user||(AUTH.user.role!=='admin'&&AUTH.user.role!=='senior')){
+  if(!ysSupervisionAccess()){
     el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3)">🔒 גישה לחניכים בכירים ומנהלים בלבד</div>';return;
   }
   /*  ⛔ מציג מיד ומרענן ברקע (סבב 85) — ר' `atRenderSupervision`. */

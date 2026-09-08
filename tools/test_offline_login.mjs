@@ -109,11 +109,17 @@ const FUNCS = ['ysRandSalt', 'ysPassFp', 'ysMakePassFp', 'ysIsMissingFpCol',
    * בה, ⭐ ורתמה שאינה מחלצת אותה נופלת ב-ReferenceError. ⛔ ואיתה שתי
    * הפונקציות שהיא נשענת עליהן: ⚠️ שולחת המנה שבבלוק החתום, ⭐ ומחולל
    * המזהה שהיא קוראת לו ביצירה. */
-  'writeUser', '_writeUserSend', 'newClientId'];
+  'writeUser', '_writeUserSend', 'newClientId',
+  /*  ⛔ ההגירה של מפתח המראה (סבב 113) — ⚠️ `_doLoginInner` קוראת לה
+   *  בשורה הראשונה, ⭐ ורתמה שאינה מחלצת אותה נופלת ב-ReferenceError. */
+  'ysUsersMirrorMigrate'];
 const VARS = ['MSG_OFFLINE', 'YS_PASS_ITER', 'YS_PASS_CTX', 'NET_TIMEOUT_MS', 'MSG_BAD_LOGIN',
   'MSG_OFF_UNKNOWN', 'MSG_OFF_NO_FP', 'MSG_OFF_NO_CRYPTO',
   /* ⭐ סבב 40 — שני מצבי כישלון שקיימים מעכשיו גם **עם** רשת. */
-  'MSG_NO_FP_ONLINE', 'MSG_NO_CRYPTO'];
+  'MSG_NO_FP_ONLINE', 'MSG_NO_CRYPTO',
+  /*  ⛔ שם מפתח המראה (סבב 113) — ⚠️ שלושת אתרי הכתיבה נוקבים בו,
+   *  ⭐ ורתמה בלעדיו כותבת ל-`undefined`. */
+  'YS_USERS_KEY', 'YS_USERS_KEY_LEGACY'];
 
 const CODE = VARS.map(grabVar).join(';\n') + ';\n' +
   OBJS.map(grabObj).join(';\n') + ';\n' + FUNCS.map(grab).join('\n');
@@ -224,6 +230,9 @@ function boot(state, opts = {}) {
      *  הדמה הזו קוראת `undefined` במקום את המטמון. */
     lsGet: (k, fb) => (k in LS ? LS[k] : (fb === undefined ? null : fb)),
     toast: (m) => TOASTS.push(m),
+    /*  ⛔ רישום כשל הכתיבה (סבב 113) — ⚠️ הוא אינו משנה את הזרימה,
+     *  ⭐ והרתמה מדמה אותו כדי שכשל אמיתי לא ייבלע ב-ReferenceError. */
+    ysWriteFail: (where, e) => TOASTS.push('[ls] ' + where + ': ' + ((e && e.message) || e)),
     H: String.fromCharCode,
     AUTH: state.AUTH || { user: null, perms: null, ROLE_LABELS: {}, offlineLogin: false },
     SB: makeSB(state),
@@ -306,7 +315,7 @@ sec('2. המטמון: כל המשתמשים הפעילים, בלי סיסמאו�
 {
   const S = boot({ tables: { ys_users: USERS() } });
   S.ysUsersCacheSaveAll(USERS());
-  const c = JSON.parse(LS.ys_users_cache);
+  const c = JSON.parse(LS.ys_mirror_users);
   eq('2א. נשמרו כל הפעילים (3 מתוך 4)', c.length, 3);
   T('2ב. המושבת לא נשמר', !c.some((u) => u.username === 'old'));
   T('2ג. ⛔ אין password_hash באף רשומה', !c.some((u) => 'password_hash' in u));
@@ -321,26 +330,61 @@ sec('2. המטמון: כל המשתמשים הפעילים, בלי סיסמאו�
 {
   // מטמון ישן בפורמט של סבב 21 (רשומה אחת, עם סיסמה גלויה)
   const S = boot({ tables: { ys_users: USERS() } });
-  LS.ys_users_cache = JSON.stringify([{ client_id: '2', username: 'moshe', password_hash: '222222',
+  LS.ys_mirror_users = JSON.stringify([{ client_id: '2', username: 'moshe', password_hash: '222222',
                                         full_name: 'משה', role: 'senior', active: true }]);
   S.ysUsersCacheSave({ client_id: '1', username: 'admin', password_hash: '111111', full_name: 'מנהל',
                        role: 'admin', active: true, pass_salt: 'aa', pass_fp: 'bb' });
-  const c = JSON.parse(LS.ys_users_cache);
+  const c = JSON.parse(LS.ys_mirror_users);
   eq('2ח. הרשומה הישנה שרדה לצד החדשה', c.length, 2);
   T('2ט. ⭐ password_hash של הרשומה הישנה **נמחק מהדיסק בפועל**',
-    !c.some((u) => 'password_hash' in u) && String(LS.ys_users_cache).indexOf('222222') === -1);
+    !c.some((u) => 'password_hash' in u) && String(LS.ys_mirror_users).indexOf('222222') === -1);
   eq('2י. הרשומה הישנה נותרה בלי טביעה', c.find((u) => u.client_id === '2').pass_fp, null);
   eq('2יא. אין כפילות בעדכון חוזר של אותו client_id',
     (S.ysUsersCacheSave({ client_id: '1', username: 'admin', full_name: 'מנהל', role: 'admin', active: true,
-                          pass_salt: 'cc', pass_fp: 'dd' }), JSON.parse(LS.ys_users_cache).length), 2);
-  eq('2יב. העדכון החוזר דרס את הטביעה', JSON.parse(LS.ys_users_cache).find((u) => u.client_id === '1').pass_fp, 'dd');
+                          pass_salt: 'cc', pass_fp: 'dd' }), JSON.parse(LS.ys_mirror_users).length), 2);
+  eq('2יב. העדכון החוזר דרס את הטביעה', JSON.parse(LS.ys_mirror_users).find((u) => u.client_id === '1').pass_fp, 'dd');
 }
 {
   const S = boot({ tables: { ys_users: USERS() } });
   S.ysUsersCacheSaveAll('לא-מערך');
-  eq('2יג. קלט שאינו מערך אינו כותב כלום', LS.ys_users_cache, undefined);
+  eq('2יג. קלט שאינו מערך אינו כותב כלום', LS.ys_mirror_users, undefined);
   S.ysUsersCacheSave({ client_id: '9', username: 'x', full_name: 'x', role: 'junior', active: false });
-  eq('2יד. משתמש לא-פעיל אינו נשמר', LS.ys_users_cache, undefined);
+  eq('2יד. משתמש לא-פעיל אינו נשמר', LS.ys_mirror_users, undefined);
+}
+
+/* ── 2י. ⛔ הגירת מפתח המראה (סבב 113) ───────────────────────────────────────
+   ⛔ מה נאכף: המפתח הישן נקרא, נכתב לחדש, ⛔ ורק אחר כך נמחק — ⚠️ ומי
+   שכבר יש לו מפתח חדש אינו נוגע בישן. ⭐ והכניסה האופליין עובדת אחרי
+   ההמרה **גם למשתמש שאינו האחרון**: ⛔ המראה מחזיקה את כל הפעילים,
+   ⚠️ וההמרה מעבירה את כולם.
+   ⛔ מה יישבר בלעדיו: שינוי שם מפתח שלא הגר את התוכן נועל בחוץ כל
+   מכשיר שאין לו רשת — ⚠️ בדיוק במצב שבו המראה נועדה לעזור.
+   ──────────────────────────────────────────────────────────────────────── */
+sec('2י. הגירת מפתח מראת המשתמשים');
+{
+  const S = boot({ tables: { ys_users: USERS() } });
+  const rows = JSON.stringify([{ client_id: '1', username: 'a', full_name: 'א', role: 'admin',
+                                 active: true, pass_salt: 'aa', pass_fp: 'bb' },
+                               { client_id: '2', username: 'b', full_name: 'ב', role: 'manager',
+                                 active: true, pass_salt: 'cc', pass_fp: 'dd' }]);
+  LS.ys_users_cache = rows;
+  delete LS.ys_mirror_users;
+  T('2י1. ההגירה רצה פעם אחת ומחזירה true', S.ysUsersMirrorMigrate() === true);
+  eq('2י2. התוכן עבר בשלמותו', LS.ys_mirror_users, rows);
+  eq('2י3. ⛔ והמפתח הישן ירד', LS.ys_users_cache, undefined);
+  T('2י4. ⛔ הרצה שנייה אינה עושה דבר', S.ysUsersMirrorMigrate() === false);
+  eq('2י5. ⭐ וכל הפעילים במראה — לא רק האחרון',
+     JSON.parse(LS.ys_mirror_users).length, 2);
+  T('2י6. ⭐ ומשתמש שאינו הראשון נמצא בה',
+    !!JSON.parse(LS.ys_mirror_users).find((u) => u.username === 'b'));
+}
+{
+  const S = boot({ tables: { ys_users: USERS() } });
+  LS.ys_users_cache = '[]';
+  LS.ys_mirror_users = '[{"client_id":"9"}]';
+  T('2י7. ⛔ מפתח חדש שכבר קיים אינו נדרס', S.ysUsersMirrorMigrate() === false);
+  eq('2י8. ⚠️ והישן נשאר על מקומו — מחיקה היא רק אחרי כתיבה שהצליחה',
+     LS.ys_users_cache, '[]');
 }
 
 /* ── 3. ysRefreshUsersCache ────────────────────────────────────────────── */
@@ -350,7 +394,7 @@ sec('3. רענון מהענן');
   const S = boot(state, {});
   await S.ysRefreshUsersCache();
   eq('3א. בלי משתמש מחובר — אפס פניות לרשת', SBLOG.length, 0);
-  eq('3ב. ...ואפס כתיבה למטמון', LS.ys_users_cache, undefined);
+  eq('3ב. ...ואפס כתיבה למטמון', LS.ys_mirror_users, undefined);
 }
 {
   const state = { tables: { ys_users: USERS() } };
@@ -361,7 +405,7 @@ sec('3. רענון מהענן');
   T('3ג. ⛔ password_hash אינו מבוקש בשאילתה כלל', sel.cols.indexOf('password_hash') === -1);
   T('3ד. pass_salt ו-pass_fp כן מבוקשים',
     sel.cols.indexOf('pass_salt') !== -1 && sel.cols.indexOf('pass_fp') !== -1);
-  eq('3ה. נמשכו כל הפעילים ולא רק המחובר', JSON.parse(LS.ys_users_cache).length, 3);
+  eq('3ה. נמשכו כל הפעילים ולא רק המחובר', JSON.parse(LS.ys_mirror_users).length, 3);
 }
 
 /* ── 4. ysVerifyOffline ────────────────────────────────────────────────── */
@@ -415,7 +459,7 @@ const CACHED = await withCache();
 
 async function offlineLogin(username, pass, cacheRows = CACHED) {
   const S = boot({ netFail: true, tables: { ys_users: USERS() } });
-  LS.ys_users_cache = JSON.stringify(cacheRows);
+  LS.ys_mirror_users = JSON.stringify(cacheRows);
   DOM._m['auth-user'].value = username;
   DOM._m['auth-pass'].value = pass;
   await S._doLoginInner();
@@ -455,7 +499,7 @@ async function offlineLogin(username, pass, cacheRows = CACHED) {
 }
 {
   const S = boot({ netFail: true, tables: { ys_users: USERS() } }, { noCrypto: true });
-  LS.ys_users_cache = JSON.stringify(CACHED);
+  LS.ys_mirror_users = JSON.stringify(CACHED);
   DOM._m['auth-user'].value = 'yosef'; DOM._m['auth-pass'].value = '333333';
   await S._doLoginInner();
   eq('5טו. בלי crypto ⇒ אין כניסה (נכשל סגור)', S.AUTH.user, null);
@@ -484,12 +528,12 @@ sec('6. כניסה מקוונת');
   await seedFp(S, rows);          // ⭐ סבב 40 — האימות המקוון הוא מול הטביעה
   DOM._m['auth-user'].value = 'moshe'; DOM._m['auth-pass'].value = '222222';
   await S._doLoginInner();
-  await waitFor(() => JSON.parse(LS.ys_users_cache || '[]').length === 3,
+  await waitFor(() => JSON.parse(LS.ys_mirror_users || '[]').length === 3,
                 'רענון המטמון אחרי כניסה מקוונת');
   T('6א. כניסה מקוונת הצליחה', !!S.AUTH.user && S.AUTH.user.username === 'moshe');
-  eq('6ב. ⭐ המטמון מכיל את כל הפעילים (לא רק את המחובר)', JSON.parse(LS.ys_users_cache).length, 3);
-  T('6ג. ⛔ ואין בו password_hash', String(LS.ys_users_cache).indexOf('password_hash') === -1);
-  T('6ד. ⛔ ואין בו אף סיסמה', !['111111', '222222', '333333'].some((p) => String(LS.ys_users_cache).indexOf(p) !== -1));
+  eq('6ב. ⭐ המטמון מכיל את כל הפעילים (לא רק את המחובר)', JSON.parse(LS.ys_mirror_users).length, 3);
+  T('6ג. ⛔ ואין בו password_hash', String(LS.ys_mirror_users).indexOf('password_hash') === -1);
+  T('6ד. ⛔ ואין בו אף סיסמה', !['111111', '222222', '333333'].some((p) => String(LS.ys_mirror_users).indexOf(p) !== -1));
 }
 {
   const rowsW = USERS();
@@ -572,9 +616,9 @@ sec('8. saveUser / changeMyPassword');
   await S.changeMyPassword();
   eq('8ט. ⛔ הסיסמה הגלויה לא עודכנה בענן — אין מסלול שכותב אותה', rows[1].password_hash, '222222');
   eq('8י. והטביעה עודכנה איתה', await S.ysPassFp('246810', rows[1].pass_salt), rows[1].pass_fp);
-  const c = JSON.parse(LS.ys_users_cache).find((u) => u.client_id === '2');
+  const c = JSON.parse(LS.ys_mirror_users).find((u) => u.client_id === '2');
   eq('8יא. ⭐ והמטמון המקומי עודכן לסיסמה החדשה', await S.ysPassFp('246810', c.pass_salt), c.pass_fp);
-  T('8יב. ⛔ ואין password_hash במטמון', String(LS.ys_users_cache).indexOf('password_hash') === -1);
+  T('8יב. ⛔ ואין password_hash במטמון', String(LS.ys_mirror_users).indexOf('password_hash') === -1);
 }
 
 /* ── 9. מעבר-משתמש ─────────────────────────────────────────────────────── */
@@ -586,7 +630,7 @@ async function doSwitch(targetId, pass, opts = {}) {
    *  מיכל הדיאלוג, ⭐ ומיכל אחד לכל הדיאלוגים אינו יכול לשאת מצב של אחד. */
   S._ysSwitchId = targetId;
   await seedFp(S, cloud);         // ⭐ סבב 40 — גם מעבר-משתמש מקוון מאמת מול הטביעה
-  LS.ys_users_cache = JSON.stringify(opts.cache || CACHED);
+  LS.ys_mirror_users = JSON.stringify(opts.cache || CACHED);
   S.AUTH.user = { client_id: '1', username: 'admin', role: 'admin', active: true };
   DOM._m['switch-pass'].value = pass;
   await S.confirmSwitch();
@@ -617,28 +661,28 @@ async function doSwitch(targetId, pass, opts = {}) {
 }
 {
   const r = await doSwitch('2', '222222');
-  await waitFor(() => !!JSON.parse(LS.ys_users_cache || '[]').find((u) => String(u.client_id) === '2'),
+  await waitFor(() => !!JSON.parse(LS.ys_mirror_users || '[]').find((u) => String(u.client_id) === '2'),
                 'רענון המטמון על המשתמש החדש');
   T('9י. מעבר מקוון עובד', r.user.client_id === '2');
-  const c = JSON.parse(LS.ys_users_cache);
+  const c = JSON.parse(LS.ys_mirror_users);
   T('9יא. ⭐ המטמון רוענן על המשתמש **החדש** (הבאג של סבב 21)',
     !!c.find((u) => String(u.client_id) === '2'));
-  T('9יב. ⛔ ואין בו password_hash', String(LS.ys_users_cache).indexOf('password_hash') === -1);
+  T('9יב. ⛔ ואין בו password_hash', String(LS.ys_mirror_users).indexOf('password_hash') === -1);
 }
 {
   // ⭐ בידוד תיקון סבב 21: השורה שנשמרת היא ה-`u` המפורש, ולא תוצאה של
   // `ysRefreshUsersCache()` שקוראת את `AUTH.user`. הרענון המלא מושבת כאן,
   // ולכן רק `ysUsersCacheSave(u)` יכולה להכניס את היעד למטמון.
   const r = await doSwitch('2', '222222', { listSelectFail: true, cache: [] });
-  await waitFor(() => JSON.parse(LS.ys_users_cache || '[]').length === 1,
+  await waitFor(() => JSON.parse(LS.ys_mirror_users || '[]').length === 1,
                 'שמירת היעד מהשורה שבידינו');
   T('9יג. מעבר מקוון עובד גם כשמשיכת הרשימה נכשלה', r.user.client_id === '2');
-  const c = JSON.parse(LS.ys_users_cache || '[]');
+  const c = JSON.parse(LS.ys_mirror_users || '[]');
   T('9יד. ⭐⭐ היעד נשמר מהשורה שבידינו — לא מ-AUTH.user הקודם (באג סבב 21)',
     c.length === 1 && String(c[0].client_id) === '2');
   T('9טו. ⛔ וגם השורה הזו נכנסה בלי password_hash',
-    String(LS.ys_users_cache).indexOf('password_hash') === -1 &&
-    String(LS.ys_users_cache).indexOf('222222') === -1);
+    String(LS.ys_mirror_users).indexOf('password_hash') === -1 &&
+    String(LS.ys_mirror_users).indexOf('222222') === -1);
 }
 
 /* ── 10. סריקה גורפת של כל מפתחות localStorage ─────────────────────────── */
@@ -650,7 +694,7 @@ sec('10. ⛔ סריקה גורפת — password_hash אינו נוגע בדיס�
   await seedFp(S, rows);          // ⭐ סבב 40 — הטביעות נזרעות במפורש, במקום דרך הבקפיל שהוסר
   DOM._m['auth-user'].value = 'admin'; DOM._m['auth-pass'].value = '111111';
   await S._doLoginInner();
-  await waitFor(() => !!LS.ys_users_cache, 'רענון המטמון לפני שינוי הסיסמה');
+  await waitFor(() => !!LS.ys_mirror_users, 'רענון המטמון לפני שינוי הסיסמה');
   DOM._m['pw-old'].value = '111111'; DOM._m['pw-new'].value = '135790';
   await S.changeMyPassword();
   const all = Object.entries(LS).map(([k, v]) => k + '=' + v).join('\n');
