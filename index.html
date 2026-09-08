@@ -3056,9 +3056,9 @@ var LS_CFG = {
   // הגלובלית — ר' ההערה מתחת ל-LS_CFG — ובנוסף `idOf`/`verify` למסלול
   // האימות מול הענן, שנכנס לפעולה כשאין עֵד מקומי בכלל.
   tier2: [
-    { key: 'ys_attend_sessions', label: 'סדרי נוכחות',   ts: _ysRecTs, minAgeMs: 180 * 86400000,
+    { key: YS_MIRROR_PREFIX + 'ys_attend_sessions', label: 'סדרי נוכחות',   ts: _ysRecTs, minAgeMs: 180 * 86400000,
       idOf: _ysRecId, syncedThrough: _ysPushedFor('ys_attend_sessions'), verify: _ysVerify('ys_attend_sessions') },
-    { key: 'ys_sleep_sessions',  label: 'רשומות שינה',   ts: _ysRecTs, minAgeMs: 180 * 86400000,
+    { key: YS_MIRROR_PREFIX + 'ys_sleep_sessions',  label: 'רשומות שינה',   ts: _ysRecTs, minAgeMs: 180 * 86400000,
       idOf: _ysRecId, syncedThrough: _ysPushedFor('ys_sleep_sessions'),  verify: _ysVerify('ys_sleep_sessions') },
     { key: 'ys_attend_treats',   label: 'טיפולים — סדרים', ts: _ysRecTs, minAgeMs: 180 * 86400000,
       idOf: _ysRecId, syncedThrough: _ysPushedFor('ys_attend_treats'),   verify: _ysVerify('ys_attend_treats') },
@@ -5382,7 +5382,7 @@ var HW_CFG = {
     catch (e) { return false; }
   },
   specs: [{
-    key: 'ys_attend_sessions',
+    key: YS_MIRROR_PREFIX + 'ys_attend_sessions',
     label: 'סדרי נוכחות מחוץ לחלון',
     inWindow: function (r) { return ysHwInWindow(r); },
     idOf: _ysRecId,
@@ -5398,10 +5398,9 @@ var HW_CFG = {
     },
     rows: function () {
       if (Array.isArray(window._atData)) return window._atData;
-      try { return JSON.parse(lsGet('ys_attend_sessions') || '[]'); }
-      catch (e) { return null; }
+      return MIRROR.ys_attend_sessions;
     },
-    apply: function (kept) { return lsSetArray('ys_attend_sessions', kept, _ysRecTs); }
+    apply: function (kept) { MIRROR.ys_attend_sessions = kept; return ysMirrorWrite('ys_attend_sessions'); }
   }]
 };
 /* ═══ חלון חם ושחזור מקומי — מודול משותף (סבב 35) ════════════════════════
@@ -5599,12 +5598,62 @@ function hwBoot() {
 window.hwBoot = hwBoot;
 /* ═══════════════ סוף מודול החלון החם ══════════════════════════════════ */
 
-/* ⛔ משפך כתיבה אחד לדיסק עבור `ys_attend_sessions` (סבב 56) — חמישה אתרי
-   כתיבה נפרדים הם חמישה מקומות שבהם שער הדיסק של החלון החם יכול להישמט,
-   ואחד שנשמט מחזיר בשקט לדיסק בדיוק את מה שהפינוי הרגע הוציא ממנו.
-   ⚠️ הזיכרון והענן לא נוגעים — רק העותק שעל הדיסק מצטמצם. */
+/* ══════════════════════════════════════════════════════════════════════════
+   שכבת המראה — העותק המקומי של הענן
+   ══════════════════════════════════════════════════════════════════════════ */
+/* ═══ שכבת המראה — מודול משותף (סבב 114) ══════════════════════════════════
+   ⛔ העותק המקומי של הענן חי במבנה אחד — ⚠️ `MIRROR`, **ממופתח בשם הטבלה**,
+      ⭐ ומיפויו 1:1 ל-`PUSH_TABLES`: ⛔ שם לוגי שני לאותה מראה הוא מיפוי
+      שחי במקום נפרד, ⚠️ ומיפוי שחי במקום נפרד נסחף.
+   ⛔ ומפתח מקומי שאינו טבלה נשאר שטוח ⛔ ואינו נכנס לכאן — ⚠️ מפתחות
+      ההגדרות (`ys_reasons` · `ys_approvals` · הטיפולים) הם **שורות בטבלה
+      אחת**, ⭐ והתורים המקומיים אינם בענן כלל.
+   ⚠️ `window._atData`/`window._slData` הם **תצוגה** ⛔ ולא מקור אמת:
+      ⭐ מקור האמת הוא `MIRROR`, ⛔ והוא מה שיורד לדיסק.
+   ⛔ **משפך כתיבה אחד לדיסק לכל טבלה** (סבב 56) — ⚠️ אתרי כתיבה נפרדים הם
+      מקומות שבהם שער הדיסק של החלון החם יכול להישמט, ⭐ ואחד שנשמט מחזיר
+      בשקט לדיסק בדיוק את מה שהפינוי הרגע הוציא ממנו.
+   ══════════════════════════════════════════════════════════════════════ */
+var YS_MIRROR_PREFIX = 'ys_mirror_';
+/*  ⛔ `null` פירושו «המפתח אינו על הדיסק» ⛔ ואינו «מערך ריק» — ⚠️ מצבת
+ *  תלמידים שאינה על הדיסק נופלת לברירת המחדל, ⭐ ומצבה ריקה אינה. */
+var MIRROR = { ys_attend_sessions: null, ys_sleep_sessions: null, ys_students: null };
+function ysMirrorLoad() {
+  Object.keys(MIRROR).forEach(function (t) {
+    var v = null;
+    try { var raw = lsGet(YS_MIRROR_PREFIX + t, null); v = raw == null ? null : JSON.parse(raw); }
+    catch (e) { console.warn('[mirror] ' + t + ' פגום — נטען ריק', e); v = null; }
+    MIRROR[t] = Array.isArray(v) ? v : null;
+  });
+}
+/*  ⛔ שער החלון החם יושב כאן — ⚠️ כל כתיבה למראה עוברת דרך `hwDiskFilter`:
+ *  ⭐ רשומה מחוץ לחלון שראייתה העננית בידינו אינה נכתבת שוב לדיסק. */
+function ysMirrorSave(t) {
+  var k = YS_MIRROR_PREFIX + t;
+  return lsSetArray(k, hwDiskFilter(k, MIRROR[t] || []), _ysRecTs);
+}
+/*  ⛔ כתיבה גולמית — ⚠️ למסלול הפינוי של החלון החם בלבד: ⭐ הוא כבר סינן,
+ *  ⛔ וסינון שני היה מודד את התוצאה של עצמו. */
+function ysMirrorWrite(t) {
+  return lsSetArray(YS_MIRROR_PREFIX + t, MIRROR[t] || [], _ysRecTs);
+}
+/* ⭐ הגירת המפתחות השטוחים לשכבת המראה (סבב 114) — ⚠️ **פעם אחת,
+   אידמפוטנטית**: ⛔ כותבים לחדש לפני שמוחקים את הישן — ⚠️ כתיבה שנכשלה
+   משאירה את הישן במקומו, ⭐ והמכשיר נטען ממנו בעלייה הבאה. */
+function ysMirrorKeysMigrate() {
+  Object.keys(MIRROR).forEach(function (t) {
+    var oldK = t, newK = YS_MIRROR_PREFIX + t;
+    var raw = lsGet(oldK, null);
+    if (raw == null) return;
+    if (lsGet(newK, null) == null && !lsSet(newK, raw)) { ysWriteFail('ysMirrorKeysMigrate', new Error(newK)); return; }
+    try { localStorage.removeItem(oldK); } catch (e) { ysWriteFail('ysMirrorKeysMigrate', e); }
+  });
+}
+ysMirrorKeysMigrate();
+ysMirrorLoad();
 function _ysAtDiskSave(rows) {
-  return lsSetArray('ys_attend_sessions', hwDiskFilter('ys_attend_sessions', rows), _ysRecTs);
+  MIRROR.ys_attend_sessions = rows;
+  return ysMirrorSave('ys_attend_sessions');
 }
 
 /* ── חיבור hanhala-ruchanit למודול ────────────────────────────────────────
@@ -6234,7 +6283,7 @@ async function ysCloudGet(kvKey, win) {
    *  היא ראיה — ⚠️ משיכת חלון אינה אומרת דבר על מה שמחוצה לו, ⭐ ורישומה
    *  היה מתיר פינוי של רשומה שמעולם לא נמדדה בענן. */
   if (!win && r.data.length) {
-    try { hwNoteCloud(kvKey, r.data); } catch (e1) { }
+    try { hwNoteCloud(YS_MIRROR_PREFIX + kvKey, r.data); } catch (e1) { }
   }
   return r.data;
 }
@@ -6945,8 +6994,8 @@ function ysMergeWithDropLog(local, remote, getKey, keepUnversionedLocal, logKey,
 
 // גישה גולמית לתלמידים (כולל tombstones) — לשכבת הסנכרון בלבד
 
-function _ysStudentsRaw() { try { return JSON.parse(lsGet('ys_students') || 'null') || []; } catch(e) { return []; } }
-function _ysStudentsSaveRaw(s) { lsSet('ys_students', JSON.stringify(s)); }
+function _ysStudentsRaw() { return MIRROR.ys_students || []; }
+function _ysStudentsSaveRaw(s) { MIRROR.ys_students = s; ysMirrorSave('ys_students'); }
 
 // updatedAt פר-מפתח לערכי ההגדרות הקטנים (LWW ברמת המפתח השלם)
 function ysSettingsMeta() { try { return JSON.parse(lsGet('ys_settings_meta') || '{}'); } catch(e) { return {}; } }
@@ -7135,7 +7184,7 @@ async function ysPullFromCloud() {
     var atSess = await ysCloudGet('ys_attend_sessions');
     if (ctxStale(_ep)) return;
     if (atSess && Array.isArray(atSess)) {
-      var _atLocal = []; try { _atLocal = JSON.parse(lsGet('ys_attend_sessions') || '[]'); } catch(eAt) {}
+      var _atLocal = MIRROR.ys_attend_sessions || [];
       var _atMerge = _ysSessionsMerge(atSess, _atLocal, 'ys_attend_sessions');
       var _atPending = _ysQueueGet('ys_attend_sessions');
       if (_atPending) _atMerge = _ysSessionsMerge(_atMerge, _atPending, 'ys_attend_sessions');
@@ -7150,11 +7199,11 @@ async function ysPullFromCloud() {
     var slSess = await ysCloudGet('ys_sleep_sessions');
     if (ctxStale(_ep)) return;
     if (slSess && Array.isArray(slSess)) {
-      var _slLocal2 = []; try { _slLocal2 = JSON.parse(lsGet('ys_sleep_sessions') || '[]'); } catch(eSl) {}
+      var _slLocal2 = MIRROR.ys_sleep_sessions || [];
       var _slMerge = _ysSessionsMerge(slSess, _slLocal2, 'ys_sleep_sessions');
       var _slPending = _ysQueueGet('ys_sleep_sessions');
       if (_slPending) _slMerge = _ysSessionsMerge(_slMerge, _slPending, 'ys_sleep_sessions');
-      lsSetArray('ys_sleep_sessions', _slMerge, _ysRecTs);
+      MIRROR.ys_sleep_sessions = _slMerge; ysMirrorSave('ys_sleep_sessions');
       window._slData = _slMerge;
       if (_slPending && _slMerge.length > slSess.length) {
         _ysQueueAdd('ys_sleep_sessions', _slMerge);
@@ -7427,7 +7476,7 @@ function ysSortStudents(list) {
     return HE.compare((x && x.name) || '', (y && y.name) || '');
   });
 }
-function getStudents(){try{var s=JSON.parse(lsGet('ys_students')||'null');if(s!==null&&Array.isArray(s)){var clsMap={'א':'a','ב':'b','ג':'g'};s.forEach(function(x){if(clsMap[x.cls])x.cls=clsMap[x.cls];});return s.filter(function(x){return !(x&&x.deleted);});}return getDefaultStudents();}catch(e){return getDefaultStudents();}}
+function getStudents(){try{var s=MIRROR.ys_students;if(s!==null&&Array.isArray(s)){var clsMap={'א':'a','ב':'b','ג':'g'};s.forEach(function(x){if(clsMap[x.cls])x.cls=clsMap[x.cls];});return s.filter(function(x){return !(x&&x.deleted);});}return getDefaultStudents();}catch(e){return getDefaultStudents();}}
 // saveStudents מקבל את הרשימה הנראית (ללא tombstones) ומחבר חזרה את המחוקים
 // מהאחסון הגולמי — כך 44 אתרי הקריאה הקיימים ממשיכים לעבוד ללא שינוי,
 // ו-tombstones שורדים כל מחזור קריאה-שמירה.
@@ -7441,7 +7490,8 @@ function saveStudents(s){
   // ⚠️ הערך המוחזר אינו קישוט (סבב 37) — מסלול הייבוא בודק אותו לפני שהוא
   //    מציג «N תלמידים נוספו בהצלחה». באחסון מלא `lsSet` מחזירה `false`,
   //    וסיכום הצלחה עליה הוא כישלון שקט.
-  return lsSet('ys_students',JSON.stringify(s));
+  MIRROR.ys_students = s;
+  return ysMirrorSave('ys_students');
 }
 // שלושת הגטרים האלה היו ה-JSON.parse היחידים ללא הגנה. ערך פגום אחד (חיתוך
 // באמצע כתיבה / פינוי מכסה) זרק מתוך ysPushToCloud והפיל את כל הדחיפה — כל
@@ -8245,6 +8295,9 @@ function ysCachedArr(memKey, lsKey) {
 /*  ⛔ קריאת הדיסק היא נקודה אחת — ⚠️ שני קוראים היו נבדלים ברגע שאחד
  *  מהם ילמד לזהות פורמט חדש, ⭐ והשני היה מחזיר null על נתון קיים. */
 function _ysDiskArr(lsKey) {
+  /*  ⛔ מפתח שיש לו מראה נקרא **ממנה** — ⚠️ `MIRROR` הוא העותק שעל הדיסק,
+   *  ⭐ וקריאה ישירה מהמפתח השטוח הייתה מקור אמת שני. */
+  if (Object.prototype.hasOwnProperty.call(MIRROR, lsKey)) return MIRROR[lsKey];
   try {
     var lc = lsGet(lsKey);
     if (lc) { var p = JSON.parse(lc); if (Array.isArray(p)) return p; }
@@ -8344,7 +8397,7 @@ async function atSaveCfg(cfg) {
 async function atLoadData() {
   if (window._atData) return window._atData;
   try { var v=await ysCloudGet('ys_attend_sessions'); if(Array.isArray(v)){window._atData=v;return v;} } catch(e){}
-  try { var lc=lsGet('ys_attend_sessions'); if(lc){window._atData=JSON.parse(lc);return window._atData;} } catch(e){}
+  if(Array.isArray(MIRROR.ys_attend_sessions)){window._atData=MIRROR.ys_attend_sessions;return window._atData;}
   window._atData=[]; return window._atData;
 }
 async function atSaveData(data) {
@@ -8416,6 +8469,9 @@ async function atSaveTreats(data) {
 
 /*  ⛔ הציור הסינכרוני של לשונית הרישום — ⚠️ הוא נקרא פעמיים: מהמטמון
  *  לפני הרשת, ושוב אחרי הרענון; ⛔ ואין בו `await`. */
+/* ══════════════════════════════════════════════════════════════════════════
+   נוכחות — ציור המסך, הסדרים והסימון האוטומטי
+   ══════════════════════════════════════════════════════════════════════════ */
 function _atPaintReg() {
   // בורר תאריך לרישום — ללא שעה (tv=undefined)
   var dw=document.getElementById('at-date-wrap');
@@ -9915,9 +9971,9 @@ window._slTreats = null;
 async function _slPullSessions(win) {
   var v = null; try { v = await ysCloudGet('ys_sleep_sessions', win); } catch (e) {}
   if (!Array.isArray(v)) return false;
-  var loc = _ysDiskArr('ys_sleep_sessions');
+  var loc = MIRROR.ys_sleep_sessions;
   var out = loc ? _ysSessionsMerge(v, loc, 'ys_sleep_sessions', !!win) : v;
-  window._slData = out; lsSetArray('ys_sleep_sessions', out, _ysRecTs);
+  window._slData = out; MIRROR.ys_sleep_sessions = out; ysMirrorSave('ys_sleep_sessions');
   return true;
 }
 async function _slPullCfg() {
@@ -9986,7 +10042,7 @@ async function slSaveCfg(cfg) {
 async function slLoadData() {
   if (window._slData) return window._slData;
   try { var v=await ysCloudGet('ys_sleep_sessions'); if(Array.isArray(v)){window._slData=v;return v;} } catch(e){}
-  try { var lc=lsGet('ys_sleep_sessions'); if(lc){window._slData=JSON.parse(lc);return window._slData;} } catch(e){}
+  if(Array.isArray(MIRROR.ys_sleep_sessions)){window._slData=MIRROR.ys_sleep_sessions;return window._slData;}
   window._slData=[]; return window._slData;
 }
 
@@ -10002,7 +10058,7 @@ async function slSaveData(data) {
   var _ep = ctxEpoch();
   var _t0=Date.now();   // ראה ההערה ב-atSaveData
   window._slData=data;
-  lsSetArray('ys_sleep_sessions', data, _ysRecTs);
+  MIRROR.ys_sleep_sessions=data; ysMirrorSave('ys_sleep_sessions');
   try {
     // מיזוג עם הענן לפני כתיבה — לא דורסים רשומות של מכשיר אחר
     var _slLocalN=ysCount(data);
@@ -10010,7 +10066,7 @@ async function slSaveData(data) {
     if (Array.isArray(_slRemote)) {
       data=_ysSessionsMerge(_slRemote, data, 'ys_sleep_sessions');
       window._slData=data;
-      lsSetArray('ys_sleep_sessions', data, _ysRecTs);
+      MIRROR.ys_sleep_sessions=data; ysMirrorSave('ys_sleep_sessions');
     }
     /* ⛔ שכבת השורות היא הכתיבה ⛔ ולא עותק שני שלה — ⚠️ עד כאן ה-`kv`
        היה המאסטר והטבלאות בצל: ⭐ מרגע שהשקילות נמדדה, ⛔ כתיבה שנייה
@@ -10276,7 +10332,7 @@ window.slEditSession = async function(recId) {
     });
     if(_apChanged2){
       rec.updatedAt=Date.now();
-      lsSetArray('ys_sleep_sessions', data, _ysRecTs);
+      MIRROR.ys_sleep_sessions=data; ysMirrorSave('ys_sleep_sessions');
       window._slData=data;
       slSaveData(data);
     }
@@ -10384,7 +10440,8 @@ function slSaveLocalNow() {
   rec.marks=marks;
   rec.updatedAt=Date.now();
   // מסלול קריטי — רישום זמן שינה. אותה סמנטיקה כמו atSaveLocalNow.
-  if(!lsSetArray('ys_sleep_sessions', window._slData, _ysRecTs)) return null;
+  MIRROR.ys_sleep_sessions = window._slData;
+  if(!ysMirrorSave('ys_sleep_sessions')) return null;
   pendMark(PK_SL_SESS + rec.id);
   return rec;
 }
