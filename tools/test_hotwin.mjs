@@ -27,7 +27,7 @@ import crypto from 'node:crypto';
 const APP = {
   checks: [
     [/HW_CFG = \{\s*\n\s*enabled: true,/, 'החלון החם פעיל (HW_CFG.enabled=true, סבב 56)'],
-    [/key: YS_MIRROR_PREFIX \+ 'ys_attend_sessions',/, 'מפרט החלון קיים ל-ys_attend_sessions (סבב 56)'],
+    [/key: mirrorKey\('ys_attend_sessions'\),/, 'מפרט החלון קיים ל-ys_attend_sessions (סבב 56)'],
     [/hwDiskFilter\(k, MIRROR\[t\] \|\| \[\]\)/, 'שער הדיסק מחווט למשפך הכתיבה של שכבת המראה (סבב 114)'],
     [/try \{ hwBoot\(\); \}/, 'hwBoot מחווטת מפונקציית העלייה'],
     [/hwRestoreMount\(\);/, 'כפתור השחזור מחווט ממסך ההגדרות'],

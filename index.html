@@ -2965,6 +2965,9 @@ async function refreshDashStats() {
 }
 
 async function loadDash(){
+  // ⭐ שכבת המראה ראשונה — ⛔ ההגירה והטעינה לפני כל קורא: ⚠️ קורא שרץ
+  //    לפניה מקבל `undefined` ונופל לברירת המחדל.
+  try { mirrorBoot(); } catch (e) { console.warn('[mirror] mirrorBoot', e); }
   // עמידות אחסון (סבב 11): מדידה + פינוי יזום **לפני** המשיכה מהענן, כדי
   // שהכתיבות של ysPullFromCloud ייפלו כבר לתוך אחסון שיש בו מקום.
   try { lsBoot(); } catch (e) { console.warn('[ls] lsBoot', e); }
@@ -3035,6 +3038,24 @@ var TOAST_DEFAULT_MS = 2800;
    ══════════════════════════════════════════════════════════════════════════ */
 // ── מדיניות האחסון המקומי של האפליקציה הזו ─────────────────────────────
 // זו הטבלה **היחידה** שנבדלת בין ארבע האפליקציות; המודול שמתחתיה זהה בכולן.
+/* ── MIRROR_CFG — הדבר היחיד שנבדל בין האפליקציות ──────────────────────── */
+/*  ⚠️ `tables` היא **פונקציה** ⛔ ולא מערך — ⭐ `PUSH_TABLES` מוצהר אחרי
+ *  הבלוק הזה, ⛔ והצהרה שקוראת אותו כאן הייתה מקבלת `undefined`.
+ *  ⛔ ו-`empty` מחזירה `null` ⛔ ולא מערך ריק — ⚠️ «המפתח אינו על הדיסק»
+ *  אינו «אין רשומות»: ⭐ מצבה שאינה על הדיסק נופלת לברירת המחדל,
+ *  ⛔ ומצבה ריקה אינה. */
+var MIRROR_CFG = {
+  prefix: 'ys_mirror_',
+  app:    'ys_',
+  tables: function () { return PUSH_TABLES; },
+  noPush: [],
+  empty:  function () { return null; },
+  ts:     function (r) { return _ysRecTs(r); },
+  clean:  function (t, rows) { return rows; },
+  adopt:  function (r) { return r; },
+  legacy: function (t) { return t; },
+  fail:   function (where, e) { ysWriteFail(where, e); },
+};
 var LS_CFG = {
   app: 'hanhala',
   logKey: 'ys_ls_log',
@@ -3056,9 +3077,9 @@ var LS_CFG = {
   // הגלובלית — ר' ההערה מתחת ל-LS_CFG — ובנוסף `idOf`/`verify` למסלול
   // האימות מול הענן, שנכנס לפעולה כשאין עֵד מקומי בכלל.
   tier2: [
-    { key: YS_MIRROR_PREFIX + 'ys_attend_sessions', label: 'סדרי נוכחות',   ts: _ysRecTs, minAgeMs: 180 * 86400000,
+    { key: mirrorKey('ys_attend_sessions'), label: 'סדרי נוכחות',   ts: _ysRecTs, minAgeMs: 180 * 86400000,
       idOf: _ysRecId, syncedThrough: _ysPushedFor('ys_attend_sessions'), verify: _ysVerify('ys_attend_sessions') },
-    { key: YS_MIRROR_PREFIX + 'ys_sleep_sessions',  label: 'רשומות שינה',   ts: _ysRecTs, minAgeMs: 180 * 86400000,
+    { key: mirrorKey('ys_sleep_sessions'),  label: 'רשומות שינה',   ts: _ysRecTs, minAgeMs: 180 * 86400000,
       idOf: _ysRecId, syncedThrough: _ysPushedFor('ys_sleep_sessions'),  verify: _ysVerify('ys_sleep_sessions') },
     { key: 'ys_attend_treats',   label: 'טיפולים — סדרים', ts: _ysRecTs, minAgeMs: 180 * 86400000,
       idOf: _ysRecId, syncedThrough: _ysPushedFor('ys_attend_treats'),   verify: _ysVerify('ys_attend_treats') },
@@ -5382,7 +5403,7 @@ var HW_CFG = {
     catch (e) { return false; }
   },
   specs: [{
-    key: YS_MIRROR_PREFIX + 'ys_attend_sessions',
+    key: mirrorKey('ys_attend_sessions'),
     label: 'סדרי נוכחות מחוץ לחלון',
     inWindow: function (r) { return ysHwInWindow(r); },
     idOf: _ysRecId,
@@ -5400,7 +5421,7 @@ var HW_CFG = {
       if (Array.isArray(window._atData)) return window._atData;
       return MIRROR.ys_attend_sessions;
     },
-    apply: function (kept) { MIRROR.ys_attend_sessions = kept; return ysMirrorWrite('ys_attend_sessions'); }
+    apply: function (kept) { return mirrorWrite('ys_attend_sessions', kept); }
   }]
 };
 /* ═══ חלון חם ושחזור מקומי — מודול משותף (סבב 35) ════════════════════════
@@ -5602,58 +5623,70 @@ window.hwBoot = hwBoot;
    שכבת המראה — העותק המקומי של הענן
    ══════════════════════════════════════════════════════════════════════════ */
 /* ═══ שכבת המראה — מודול משותף (סבב 114) ══════════════════════════════════
-   ⛔ העותק המקומי של הענן חי במבנה אחד — ⚠️ `MIRROR`, **ממופתח בשם הטבלה**,
-      ⭐ ומיפויו 1:1 ל-`PUSH_TABLES`: ⛔ שם לוגי שני לאותה מראה הוא מיפוי
-      שחי במקום נפרד, ⚠️ ומיפוי שחי במקום נפרד נסחף.
-   ⛔ ומפתח מקומי שאינו טבלה נשאר שטוח ⛔ ואינו נכנס לכאן — ⚠️ מפתחות
-      ההגדרות (`ys_reasons` · `ys_approvals` · הטיפולים) הם **שורות בטבלה
-      אחת**, ⭐ והתורים המקומיים אינם בענן כלל.
-   ⚠️ `window._atData`/`window._slData` הם **תצוגה** ⛔ ולא מקור אמת:
-      ⭐ מקור האמת הוא `MIRROR`, ⛔ והוא מה שיורד לדיסק.
-   ⛔ **משפך כתיבה אחד לדיסק לכל טבלה** (סבב 56) — ⚠️ אתרי כתיבה נפרדים הם
-      מקומות שבהם שער הדיסק של החלון החם יכול להישמט, ⭐ ואחד שנשמט מחזיר
-      בשקט לדיסק בדיוק את מה שהפינוי הרגע הוציא ממנו.
+   ⛔ העותק המקומי של הענן חי במבנה **אחד** — ⚠️ `MIRROR`, ממופתח בשם
+      הטבלה: ⭐ שם לוגי שני לאותה מראה הוא מיפוי שחי במקום נפרד, ⛔ ומיפוי
+      שחי במקום נפרד מתיישן בשקט.
+   ⛔ **ומפתח האחסון נגזר** ⛔ ואינו מוקלד — ⚠️ מפתח שהוקלד בהצהרת הפינוי
+      ואינו מה שנכתב בפועל אינו מתפנה לעולם, ⭐ והפינוי מדווח «אין מה
+      לפנות» על מפתח שגדל בלי גבול.
+   ⛔ **שער החלון החם יושב ב-`mirrorSave`** — ⚠️ והכתיבה הגולמית היחידה
+      היא `mirrorWrite`, למסלול שכבר סינן: ⭐ סינון שני מודד את התוצאה של
+      עצמו, ⛔ וכתיבה שעוקפת את השער מחזירה לדיסק את מה שהרגע פונה ממנו.
+   ⛔ שינוי כאן — שלוש האפליקציות **ושלושת עותקי השער**, באותו סבב: ⚠️ אחרת
+      החתימה נשברת בריפו אחד, והשער מאשר את הסטייה בשניים.
+   ⚠️ מה שאינו נאכף כאן: **תוכן** השורות ומי שאינו טבלה — ⭐ הניקוי הוא
+      `MIRROR_CFG.clean`, ⛔ והמפתחות השטוחים מוכרזים בשער.
    ══════════════════════════════════════════════════════════════════════ */
-var YS_MIRROR_PREFIX = 'ys_mirror_';
-/*  ⛔ `null` פירושו «המפתח אינו על הדיסק» ⛔ ואינו «מערך ריק» — ⚠️ מצבת
- *  תלמידים שאינה על הדיסק נופלת לברירת המחדל, ⭐ ומצבה ריקה אינה. */
-var MIRROR = { ys_attend_sessions: null, ys_sleep_sessions: null, ys_students: null };
-function ysMirrorLoad() {
-  Object.keys(MIRROR).forEach(function (t) {
+var MIRROR = {};
+/*  ⛔ תחילית האפליקציה נגרעת משם הטבלה — ⚠️ היא כבר בתוך
+ *  `MIRROR_CFG.prefix`, ⭐ ושמה פעמיים מייצר מפתח שאיש אינו מחפש. */
+function mirrorKey(t) {
+  var s = String(t), p = MIRROR_CFG.app;
+  return MIRROR_CFG.prefix + (p && s.indexOf(p) === 0 ? s.slice(p.length) : s);
+}
+function mirrorTables() { return MIRROR_CFG.tables(); }
+function mirrorLoad() {
+  mirrorTables().forEach(function (t) {
     var v = null;
-    try { var raw = lsGet(YS_MIRROR_PREFIX + t, null); v = raw == null ? null : JSON.parse(raw); }
+    try { var raw = lsGet(mirrorKey(t), null); v = raw == null ? null : JSON.parse(raw); }
     catch (e) { console.warn('[mirror] ' + t + ' פגום — נטען ריק', e); v = null; }
-    MIRROR[t] = Array.isArray(v) ? v : null;
+    if (!Array.isArray(v)) { MIRROR[t] = MIRROR_CFG.empty(); return; }
+    MIRROR[t] = v.filter(function (r) { return r && typeof r === 'object'; });
+    MIRROR[t].forEach(MIRROR_CFG.adopt);
   });
 }
-/*  ⛔ שער החלון החם יושב כאן — ⚠️ כל כתיבה למראה עוברת דרך `hwDiskFilter`:
- *  ⭐ רשומה מחוץ לחלון שראייתה העננית בידינו אינה נכתבת שוב לדיסק. */
-function ysMirrorSave(t) {
-  var k = YS_MIRROR_PREFIX + t;
-  return lsSetArray(k, hwDiskFilter(k, MIRROR[t] || []), _ysRecTs);
+function mirrorSave(t) {
+  var k = mirrorKey(t);
+  return lsSetArray(k, MIRROR_CFG.clean(t, hwDiskFilter(k, MIRROR[t] || [])), MIRROR_CFG.ts);
 }
-/*  ⛔ כתיבה גולמית — ⚠️ למסלול הפינוי של החלון החם בלבד: ⭐ הוא כבר סינן,
- *  ⛔ וסינון שני היה מודד את התוצאה של עצמו. */
-function ysMirrorWrite(t) {
-  return lsSetArray(YS_MIRROR_PREFIX + t, MIRROR[t] || [], _ysRecTs);
+/*  ⛔ **ואינה נוגעת בזיכרון** — ⚠️ הפינוי מצמצם את הדיסק, ⭐ והמסך שפתוח
+ *  ממשיך להציג את מה שכבר נטען. */
+function mirrorWrite(t, rows) {
+  return lsSetArray(mirrorKey(t), MIRROR_CFG.clean(t, rows || []), MIRROR_CFG.ts);
 }
-/* ⭐ הגירת המפתחות השטוחים לשכבת המראה (סבב 114) — ⚠️ **פעם אחת,
-   אידמפוטנטית**: ⛔ כותבים לחדש לפני שמוחקים את הישן — ⚠️ כתיבה שנכשלה
-   משאירה את הישן במקומו, ⭐ והמכשיר נטען ממנו בעלייה הבאה. */
-function ysMirrorKeysMigrate() {
-  Object.keys(MIRROR).forEach(function (t) {
-    var oldK = t, newK = YS_MIRROR_PREFIX + t;
+/*  ⭐ הגירת מפתח חד-פעמית ואידמפוטנטית — ⛔ כותבים לחדש לפני שמוחקים את
+ *  הישן: ⚠️ כתיבה שנכשלה משאירה את הישן במקומו, ⭐ והמכשיר נטען ממנו
+ *  בעלייה הבאה · ⛔ ומפתח חדש שכבר קיים אינו נדרס. */
+function mirrorKeysMigrate() {
+  mirrorTables().forEach(function (t) {
+    var newK = mirrorKey(t), oldK = MIRROR_CFG.legacy(t);
+    if (!oldK || oldK === newK) return;
     var raw = lsGet(oldK, null);
     if (raw == null) return;
-    if (lsGet(newK, null) == null && !lsSet(newK, raw)) { ysWriteFail('ysMirrorKeysMigrate', new Error(newK)); return; }
-    try { localStorage.removeItem(oldK); } catch (e) { ysWriteFail('ysMirrorKeysMigrate', e); }
+    if (lsGet(newK, null) == null && !lsSet(newK, raw)) { MIRROR_CFG.fail('mirrorKeysMigrate', new Error(newK)); return; }
+    try { localStorage.removeItem(oldK); } catch (e) { MIRROR_CFG.fail('mirrorKeysMigrate', e); }
   });
 }
-ysMirrorKeysMigrate();
-ysMirrorLoad();
+/*  ⛔ נקודת ההפעלה האחת — ⚠️ הגירה ואז טעינה: ⭐ טעינה שקדמה להגירה קוראת
+ *  מפתח שהרגע עבר, ⛔ ומקבלת ריק. */
+function mirrorBoot() { mirrorKeysMigrate(); mirrorLoad(); }
+/* ═══════════════ סוף מודול שכבת המראה ═══════════════════════════════════ */
+/*  ⛔ משפך כתיבה אחד לדיסק עבור `ys_attend_sessions` (סבב 56) — ⚠️ אתרי
+ *  כתיבה נפרדים הם מקומות שבהם שער הדיסק של החלון החם יכול להישמט,
+ *  ⭐ ואחד שנשמט מחזיר בשקט לדיסק בדיוק את מה שהפינוי הרגע הוציא ממנו. */
 function _ysAtDiskSave(rows) {
   MIRROR.ys_attend_sessions = rows;
-  return ysMirrorSave('ys_attend_sessions');
+  return mirrorSave('ys_attend_sessions');
 }
 
 /* ── חיבור hanhala-ruchanit למודול ────────────────────────────────────────
@@ -6283,7 +6316,7 @@ async function ysCloudGet(kvKey, win) {
    *  היא ראיה — ⚠️ משיכת חלון אינה אומרת דבר על מה שמחוצה לו, ⭐ ורישומה
    *  היה מתיר פינוי של רשומה שמעולם לא נמדדה בענן. */
   if (!win && r.data.length) {
-    try { hwNoteCloud(YS_MIRROR_PREFIX + kvKey, r.data); } catch (e1) { }
+    try { hwNoteCloud(mirrorKey(kvKey), r.data); } catch (e1) { }
   }
   return r.data;
 }
@@ -6995,7 +7028,7 @@ function ysMergeWithDropLog(local, remote, getKey, keepUnversionedLocal, logKey,
 // גישה גולמית לתלמידים (כולל tombstones) — לשכבת הסנכרון בלבד
 
 function _ysStudentsRaw() { return MIRROR.ys_students || []; }
-function _ysStudentsSaveRaw(s) { MIRROR.ys_students = s; ysMirrorSave('ys_students'); }
+function _ysStudentsSaveRaw(s) { MIRROR.ys_students = s; mirrorSave('ys_students'); }
 
 // updatedAt פר-מפתח לערכי ההגדרות הקטנים (LWW ברמת המפתח השלם)
 function ysSettingsMeta() { try { return JSON.parse(lsGet('ys_settings_meta') || '{}'); } catch(e) { return {}; } }
@@ -7203,7 +7236,7 @@ async function ysPullFromCloud() {
       var _slMerge = _ysSessionsMerge(slSess, _slLocal2, 'ys_sleep_sessions');
       var _slPending = _ysQueueGet('ys_sleep_sessions');
       if (_slPending) _slMerge = _ysSessionsMerge(_slMerge, _slPending, 'ys_sleep_sessions');
-      MIRROR.ys_sleep_sessions = _slMerge; ysMirrorSave('ys_sleep_sessions');
+      MIRROR.ys_sleep_sessions = _slMerge; mirrorSave('ys_sleep_sessions');
       window._slData = _slMerge;
       if (_slPending && _slMerge.length > slSess.length) {
         _ysQueueAdd('ys_sleep_sessions', _slMerge);
@@ -7491,7 +7524,7 @@ function saveStudents(s){
   //    מציג «N תלמידים נוספו בהצלחה». באחסון מלא `lsSet` מחזירה `false`,
   //    וסיכום הצלחה עליה הוא כישלון שקט.
   MIRROR.ys_students = s;
-  return ysMirrorSave('ys_students');
+  return mirrorSave('ys_students');
 }
 // שלושת הגטרים האלה היו ה-JSON.parse היחידים ללא הגנה. ערך פגום אחד (חיתוך
 // באמצע כתיבה / פינוי מכסה) זרק מתוך ysPushToCloud והפיל את כל הדחיפה — כל
@@ -9973,7 +10006,7 @@ async function _slPullSessions(win) {
   if (!Array.isArray(v)) return false;
   var loc = MIRROR.ys_sleep_sessions;
   var out = loc ? _ysSessionsMerge(v, loc, 'ys_sleep_sessions', !!win) : v;
-  window._slData = out; MIRROR.ys_sleep_sessions = out; ysMirrorSave('ys_sleep_sessions');
+  window._slData = out; MIRROR.ys_sleep_sessions = out; mirrorSave('ys_sleep_sessions');
   return true;
 }
 async function _slPullCfg() {
@@ -10058,7 +10091,7 @@ async function slSaveData(data) {
   var _ep = ctxEpoch();
   var _t0=Date.now();   // ראה ההערה ב-atSaveData
   window._slData=data;
-  MIRROR.ys_sleep_sessions=data; ysMirrorSave('ys_sleep_sessions');
+  MIRROR.ys_sleep_sessions=data; mirrorSave('ys_sleep_sessions');
   try {
     // מיזוג עם הענן לפני כתיבה — לא דורסים רשומות של מכשיר אחר
     var _slLocalN=ysCount(data);
@@ -10066,7 +10099,7 @@ async function slSaveData(data) {
     if (Array.isArray(_slRemote)) {
       data=_ysSessionsMerge(_slRemote, data, 'ys_sleep_sessions');
       window._slData=data;
-      MIRROR.ys_sleep_sessions=data; ysMirrorSave('ys_sleep_sessions');
+      MIRROR.ys_sleep_sessions=data; mirrorSave('ys_sleep_sessions');
     }
     /* ⛔ שכבת השורות היא הכתיבה ⛔ ולא עותק שני שלה — ⚠️ עד כאן ה-`kv`
        היה המאסטר והטבלאות בצל: ⭐ מרגע שהשקילות נמדדה, ⛔ כתיבה שנייה
@@ -10332,7 +10365,7 @@ window.slEditSession = async function(recId) {
     });
     if(_apChanged2){
       rec.updatedAt=Date.now();
-      MIRROR.ys_sleep_sessions=data; ysMirrorSave('ys_sleep_sessions');
+      MIRROR.ys_sleep_sessions=data; mirrorSave('ys_sleep_sessions');
       window._slData=data;
       slSaveData(data);
     }
@@ -10441,7 +10474,7 @@ function slSaveLocalNow() {
   rec.updatedAt=Date.now();
   // מסלול קריטי — רישום זמן שינה. אותה סמנטיקה כמו atSaveLocalNow.
   MIRROR.ys_sleep_sessions = window._slData;
-  if(!ysMirrorSave('ys_sleep_sessions')) return null;
+  if(!mirrorSave('ys_sleep_sessions')) return null;
   pendMark(PK_SL_SESS + rec.id);
   return rec;
 }
