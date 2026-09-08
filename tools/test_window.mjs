@@ -207,8 +207,11 @@ if (RUN_MUT) {
 function mutFails(label, mutSrc, re) {
   assert(!re.test(mutSrc), 'מוטציה — ' + label + ' מפילה את הטענה');
 }
-mutFails('כיבוי החלון', SRC.replace('enabled: true,\n  admin: function () {\n    try { return !!(AUTH.user',
-  'enabled: false,\n  admin: function () {\n    try { return !!(AUTH.user'),
+/*  ⛔ העוגן הוא שורת הדגל בלבד (סבב 113) — ⚠️ גוף בדיקת ההרשאה עבר
+ *  לבלוק המשותף, ⭐ ומוטציה שנעולה עליו הייתה מפסיקה להחליף דבר: ⛔ ואז
+ *  היא נראית כאכיפה ואינה אוכפת. */
+mutFails('כיבוי החלון', SRC.replace('HW_CFG = {\n  enabled: true,',
+  'HW_CFG = {\n  enabled: false,'),
   /HW_CFG = \{\s*\n\s*enabled: true,/);
 mutFails('הסרת שער הדיסק מהמשפך',
   SRC.replace("return lsSetArray('ys_attend_sessions', hwDiskFilter('ys_attend_sessions', rows), _ysRecTs);",
